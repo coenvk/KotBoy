@@ -6,7 +6,7 @@ class Div : IoDevice(IoReg.DIV.address) {
 
     private val update: Int = 256
 
-    override fun tick(cycles: Int) {
+    override fun tick(cycles: Int): Boolean {
         super.tick(cycles)
         var div = get(IoReg.DIV.address)
         while (this.cycles >= update) {
@@ -17,6 +17,7 @@ class Div : IoDevice(IoReg.DIV.address) {
             }
         }
         super.set(IoReg.DIV.address, div)
+        return true
     }
 
     override fun set(address: Address, value: Int): Boolean {

@@ -1,7 +1,4 @@
-package com.arman.kotboy
-
-import com.arman.kotboy.memory.Address
-import com.arman.kotboy.memory.Memory
+package com.arman.kotboy.memory
 
 abstract class AddressSpace(startAddress: Address, protected val values: IntArray) :
     Memory(startAddress, startAddress + values.size - 1) {
@@ -15,6 +12,10 @@ abstract class AddressSpace(startAddress: Address, protected val values: IntArra
 
     override fun reset() {
         this.values.fill(0)
+    }
+
+    fun fill(value: Int) {
+        this.values.fill(value)
     }
 
     override fun set(address: Address, value: Int): Boolean {

@@ -14,7 +14,6 @@ class Mmu(private val gb: KotBoy) {
         this.memory.put(Ram(0xC000, 0xFDFF))
         this.memory.put(gb.io)
         this.memory.put(Ram(0xFF80, 0xFFFE))
-        // TODO: 0xFFFF - IE interrupt enable register
     }
 
     fun reset() {

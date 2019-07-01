@@ -1,6 +1,6 @@
 package com.arman.kotboy.gpu
 
-import com.arman.kotboy.AddressSpace
+import com.arman.kotboy.memory.AddressSpace
 import com.arman.kotboy.KotBoy
 import com.arman.kotboy.memory.Address
 import com.arman.kotboy.memory.Ram

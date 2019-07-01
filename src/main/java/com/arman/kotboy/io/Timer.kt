@@ -31,17 +31,18 @@ class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) {
         val freqs = arrayOf(1024, 16, 64, 256)
     }
 
-    override fun tick(cycles: Int) {
-        if (tac and 0b100 == 0) return
+    override fun tick(cycles: Int): Boolean {
+        if (tac and 0b100 == 0) return false
         super.tick(cycles)
 
         val freq = freqs[tac and 0b11]
         this.tima += this.cycles / freq
         this.cycles = this.cycles.rem(freq)
 
-        if (tima > 0xFF) {
+        return if (tima > 0xFF) {
             tima = tma
-        }
+            true
+        } else false
     }
 
     override fun set(address: Address, value: Int): Boolean {

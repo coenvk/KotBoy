@@ -1,6 +1,6 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.AddressSpace
+import com.arman.kotboy.memory.AddressSpace
 import com.arman.kotboy.KotBoy
 import com.arman.kotboy.cpu.util.and
 import com.arman.kotboy.cpu.util.at
@@ -204,7 +204,7 @@ class Lcd(private val gb: KotBoy) :
         }
     }
 
-    override fun tick(cycles: Int) {
+    override fun tick(cycles: Int): Boolean {
         if (isLcdEnabled()) {
             if (--this.cycles <= 0) {
                 when (mode) {
@@ -233,7 +233,9 @@ class Lcd(private val gb: KotBoy) :
                 }
                 this.cycles = mode.cycles
             }
+            return true
         }
+        return false
     }
 
     private fun getBitmapSliver(tileId: Int, scanline: Int, b: Int): Int {

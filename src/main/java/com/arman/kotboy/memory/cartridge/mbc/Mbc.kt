@@ -1,6 +1,6 @@
 package com.arman.kotboy.memory.cartridge.mbc
 
-import com.arman.kotboy.AddressSpace
+import com.arman.kotboy.memory.AddressSpace
 import com.arman.kotboy.memory.Address
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom

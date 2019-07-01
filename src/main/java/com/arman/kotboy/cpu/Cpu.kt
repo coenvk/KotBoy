@@ -62,6 +62,8 @@ class Cpu(private val gb: KotBoy) {
         this.mmu[IoReg.IF.address] = this.mmu[IoReg.IF.address] or mask
         this.halted = false
 
+        this.gb.stopped = false
+
         if (!this.haltBug) {
             this.PC += 1
         } else this.haltBug = false
@@ -261,7 +263,7 @@ class Cpu(private val gb: KotBoy) {
     }
 
     fun stop() {
-        // TODO
+        this.gb.stopped = true
     }
 
     fun di() {

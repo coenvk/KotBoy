@@ -1,6 +1,6 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.AddressSpace
+import com.arman.kotboy.memory.AddressSpace
 import com.arman.kotboy.memory.Address
 
 class Serial : AddressSpace(IoReg.SB.address, IoReg.SC.address) {

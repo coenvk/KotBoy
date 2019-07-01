@@ -1,6 +1,5 @@
 package com.arman.kotboy.memory
 
-import com.arman.kotboy.AddressSpace
 import com.arman.kotboy.cpu.util.hexString
 
 typealias Address = Int

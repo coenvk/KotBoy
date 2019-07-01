@@ -1,6 +1,6 @@
 package com.arman.kotboy.gpu
 
-import com.arman.kotboy.AddressSpace
+import com.arman.kotboy.memory.AddressSpace
 
 open class ColorPalette(offset: Int) : AddressSpace(offset, offset + 1) {
 
