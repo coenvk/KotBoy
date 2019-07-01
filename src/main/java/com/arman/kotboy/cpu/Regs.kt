@@ -1,16 +1,22 @@
 package com.arman.kotboy.cpu
 
-import com.arman.kotboy.cpu.util.*
+import com.arman.kotboy.cpu.util.lsb
+import com.arman.kotboy.cpu.util.msb
+import com.arman.kotboy.cpu.util.toUnsignedInt
 
 object Regs {
 
-    var A: Int = 0
-    var B: Int = 0
-    var C: Int = 0
-    var D: Int = 0
-    var E: Int = 0
-    var H: Int = 0
-    var L: Int = 0
+    var A: Byte = 0
+    var F: Byte = 0
+
+    var B: Byte = 0
+    var C: Byte = 0
+
+    var D: Byte = 0
+    var E: Byte = 0
+
+    var H: Byte = 0
+    var L: Byte = 0
 
     var SP: Int = 0
     var PC: Int = 0
@@ -27,34 +33,36 @@ object Regs {
         SP = (SP + 1) and 0xFFFF
     }
 
-    private var flags: BitMask = BitMask(0)
+    private fun readReg16(r1: Byte, r2: Byte): Int {
+        return (r1.toUnsignedInt() shl 8) or r2.toUnsignedInt()
+    }
 
     var AF: Int
-        get() = (A shl 8) or flags
+        get() = readReg16(A, F)
         set(value) {
-            A = value.msb()
-            flags = flags and 0xf0
+            A = value.msb().toByte()
+            F = (value.toUnsignedInt() and 0xF0).toByte()
         }
 
     var BC: Int
-        get() = (B shl 8) or C
+        get() = readReg16(B, C)
         set(value) {
-            B = value.msb()
-            C = value.lsb()
+            B = value.msb().toByte()
+            C = value.lsb().toByte()
         }
 
     var DE: Int
-        get() = (D shl 8) or E
+        get() = readReg16(D, E)
         set(value) {
-            D = value.msb()
-            E = value.lsb()
+            D = value.msb().toByte()
+            E = value.lsb().toByte()
         }
 
     var HL: Int
-        get() = (H shl 8) or L
+        get() = readReg16(H, L)
         set(value) {
-            H = value.msb()
-            L = value.lsb()
+            H = value.msb().toByte()
+            L = value.lsb().toByte()
         }
 
 }

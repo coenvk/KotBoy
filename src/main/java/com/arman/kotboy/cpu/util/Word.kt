@@ -3,7 +3,7 @@ package com.arman.kotboy.cpu.util
 typealias Word = Int
 
 fun Word.msb(): Word {
-    return (this shr 8) and 0xFF
+    return (this ushr 8)
 }
 
 fun Word.lsb(): Word {
@@ -19,7 +19,7 @@ fun Word.dec(): Word {
 }
 
 fun toWord(msb: Int, lsb: Int): Word {
-    return (msb shr 8) or lsb
+    return (msb shl 8) or lsb
 }
 
 fun Word.bit(pos: Word): Boolean {
@@ -27,7 +27,7 @@ fun Word.bit(pos: Word): Boolean {
 }
 
 fun Word.putBit(pos: Word, bit: Boolean): Word {
-    return if (bit) ((this or (1 shl pos)) and 0xFF) else ((1 shl pos).inv() and this and 0xFF)
+    return if (bit) ((this or (1 shl pos)).lsb()) else ((1 shl pos).inv() and this.lsb())
 }
 
 fun Word.putMsb(bit: Boolean): Word {

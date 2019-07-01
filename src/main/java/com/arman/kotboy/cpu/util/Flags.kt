@@ -1,59 +1,48 @@
 package com.arman.kotboy.cpu.util
 
-class BitMask(val value: Int)
-
 interface Flags {
 
     val bit: Int
 
-    fun toBitMask(): BitMask = BitMask(bit)
+    fun toInt(): Int = this.bit
 
 }
 
-infix fun Flags.and(other: Int): BitMask =
-    BitMask(bit and other)
+infix fun Flags.and(other: Int): Int = this.bit and other
 
-infix fun <T : Flags> Flags.and(other: T): BitMask =
-    BitMask(bit and other.bit)
+infix fun <T : Flags> Flags.and(other: T): Int = this.bit and other.bit
 
-infix fun Flags.or(other: Int): BitMask =
-    BitMask(bit or other)
+infix fun Flags.or(other: Int): Int = this.bit or other
 
-infix fun <T : Flags> Flags.or(other: T): BitMask =
-    BitMask(bit or other.bit)
+infix fun <T : Flags> Flags.or(other: T): Int = this.bit or other.bit
 
-infix operator fun Flags.plus(other: Flags): BitMask =
-    BitMask(bit or other.bit)
+infix operator fun Flags.plus(other: Flags): Int = this.bit or other.bit
 
-inline fun <reified T> enabledValues(mask: BitMask): List<T> where T : Enum<T>, T : Flags {
+infix operator fun Flags.minus(other: Flags): Int = this.bit and other.bit.inv()
+
+infix operator fun Flags.times(other: Flags): Int = this.bit xor other.bit
+
+inline fun <reified T> enabledValues(arg: Int): List<T> where T : Enum<T>, T : Flags {
     return enumValues<T>().filter {
-        mask hasFlag it
+        arg hasFlag it
     }
 }
 
-infix fun BitMask.or(other: Flags): BitMask = BitMask(value or other.bit)
-
-infix fun BitMask.or(other: Int): BitMask = BitMask(value or other)
-
-infix fun BitMask.and(other: Flags): BitMask = BitMask(value and other.bit)
-
-infix fun BitMask.and(other: Int): BitMask = BitMask(value and other)
-
-infix operator fun BitMask.plus(other: BitMask): BitMask =
-    BitMask(value or other.value)
-
-infix operator fun BitMask.plus(other: Flags): BitMask =
-    BitMask(value or other.bit)
-
-infix fun <T : Flags> BitMask.hasFlag(which: T): Boolean {
-    if (value == 0 || (value > 0 && which.bit == 0)) return false
-    return value and which.bit == which.bit
+infix fun <T : Flags> Int.hasFlag(which: T): Boolean {
+    if (this == 0 || (this > 0 && which.bit == 0)) return false
+    return this and which.bit == which.bit
 }
 
-infix fun <T : Flags> BitMask.set(which: T): BitMask =
-    BitMask(value or which.bit)
+infix fun Int.and(other: Flags): Int = this and other.bit
 
-infix fun <T : Flags> BitMask.unset(which: T): BitMask =
-    BitMask(value xor which.bit)
+infix fun Int.or(other: Flags): Int = this or other.bit
 
-infix fun Int.or(other: BitMask): Int = this or other.value
+infix fun Int.set(other: Flags): Int = this or other.bit
+
+infix fun Int.reset(other: Flags): Int = this and other.bit.inv()
+
+infix operator fun <T : Flags> Int.plus(other: T): Int = this or other.bit
+
+infix operator fun <T : Flags> Int.minus(other: T): Int = this and other.bit.inv()
+
+infix operator fun <T : Flags> Int.times(other: T): Int = this xor other.bit
