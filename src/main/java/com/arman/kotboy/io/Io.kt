@@ -1,6 +1,7 @@
 package com.arman.kotboy.io
 
 import com.arman.kotboy.KotBoy
+import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.memory.Address
 import com.arman.kotboy.memory.AddressSpace
 import com.arman.kotboy.memory.MemoryByte
@@ -10,12 +11,14 @@ class Io(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
 
     var cycles = 0
 
+    val __if = MemoryByte(IoReg.IF.address)
+
     init {
-        put(Lcd(gb))
-        put(Div())
-        put(Serial())
-        put(Joypad())
         put(Timer())
+        put(Lcd(gb))
+        put(Serial())
+        put(Joypad(gb))
+        put(__if)
         put(MemoryByte(IoReg.IE.address))
     }
 
@@ -26,6 +29,9 @@ class Io(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
     override fun reset() {
         super.reset()
         this.cycles = 0
+        this.__if.set(0xE1)
+        this[IoReg.LCDC.address] = 0x91
+        this[IoReg.STAT.address] = 0x85
     }
 
     fun tick(cycles: Int) {
@@ -43,12 +49,19 @@ class Io(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
                         device.tick(cycles)
                     }
                 }
+            } else if (device is Joypad) {
+                if (device.tick(cycles)) {
+                    gb.cpu.interrupt(MemoryMap.HI_LO_P10_P13_INTERRUPT)
+                }
             } else device?.tick(cycles)
         }
     }
 
     override fun set(address: Address, value: Int): Boolean {
         val space = getSpace(address)
+        if (address == IoReg.IF.address) {
+            return space?.set(address, value or 0xE0) ?: false
+        }
         return space?.set(address, value) ?: false
     }
 

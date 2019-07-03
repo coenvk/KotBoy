@@ -4,7 +4,7 @@ import com.arman.kotboy.cpu.util.hexString
 
 typealias Address = Int
 
-open class Memory(protected val startAddress: Address, protected val endAddress: Address = startAddress) {
+open class Memory(protected val startAddress: Address, private val endAddress: Address = startAddress) {
 
     constructor() : this(0x0, 0xFFFF)
 

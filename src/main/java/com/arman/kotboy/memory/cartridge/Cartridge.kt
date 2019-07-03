@@ -4,7 +4,7 @@ import com.arman.kotboy.memory.AddressSpace
 import com.arman.kotboy.memory.*
 import com.arman.kotboy.memory.cartridge.mbc.*
 
-class Cartridge(startAddress: Address, vararg values: Int) : AddressSpace(startAddress, values) {
+class Cartridge(vararg values: Int) : AddressSpace(0x0, values) {
 
     private val type: CartridgeType = CartridgeType[this.values[0x0147]]
 

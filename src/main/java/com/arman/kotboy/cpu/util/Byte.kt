@@ -4,6 +4,15 @@ fun Byte.hexString(): String = "$${this.toString(16)}"
 
 fun Int.hexString(): String = "$${this.toString(16)}"
 
+fun IntArray.contentToHexString(): String {
+    var out = "["
+    for (i in 0 until this.size - 1) {
+        out += "${this[i].hexString()}, "
+    }
+    out += "${this[this.size - 1].hexString()}]"
+    return out
+}
+
 fun Byte.toUnsignedInt(): Int = this.toInt().lsb()
 
 fun Int.toUnsignedInt(): Int = this.lsb()

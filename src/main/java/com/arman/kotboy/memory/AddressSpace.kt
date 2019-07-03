@@ -31,7 +31,7 @@ abstract class AddressSpace(startAddress: Address, protected val values: IntArra
         } else 0xFF
     }
 
-    fun get(startAddress: Address, endAddress: Address): IntArray? {
+    open fun get(startAddress: Address, endAddress: Address): IntArray? {
         return if (accepts(startAddress) && accepts(endAddress)) {
             this.values.sliceArray(startAddress..endAddress)
         } else null

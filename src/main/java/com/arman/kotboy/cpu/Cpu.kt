@@ -6,6 +6,7 @@ import com.arman.kotboy.io.IoReg
 import com.arman.kotboy.memory.MemoryMap
 import com.arman.kotboy.memory.Mmu
 import kotlin.experimental.inv
+import kotlin.system.exitProcess
 
 @Suppress("FunctionName", "LocalVariableName", "PropertyName")
 class Cpu(private val gb: KotBoy) {
@@ -15,6 +16,7 @@ class Cpu(private val gb: KotBoy) {
             return this.gb.mmu
         }
     val alu: Alu = Alu()
+    val processor = Processor()
     var cycle: Long = 0
         private set
     var halted: Boolean = false
@@ -47,7 +49,13 @@ class Cpu(private val gb: KotBoy) {
     var regs: ByteArray = ByteArray(8)
 
     fun reset() {
-        this.mmu.reset()
+        this.write(Reg16.AF, 0x01B0)
+        this.write(Reg16.BC, 0x0013)
+        this.write(Reg16.DE, 0x00D8)
+        this.write(Reg16.HL, 0x014D)
+        this.SP = 0xFFFE
+        this.PC = 0x0100
+        this.ime = true
     }
 
     fun interrupt(interrupt: MemoryMap) {
@@ -60,13 +68,9 @@ class Cpu(private val gb: KotBoy) {
             else -> return
         }
         this.mmu[IoReg.IF.address] = this.mmu[IoReg.IF.address] or mask
+
         this.halted = false
-
         this.gb.stopped = false
-
-        if (!this.haltBug) {
-            this.PC += 1
-        } else this.haltBug = false
     }
 
     fun read(reg: Reg8): Byte {
@@ -114,9 +118,9 @@ class Cpu(private val gb: KotBoy) {
     }
 
     fun next(): Int {
-        if (halted) return OpCode.HALT_76.cycles
-
-        handleInterrupt()
+        if (this.halted) {
+            return OpCode.HALT_76.cycles
+        }
 
         val line = PC.hexString()
 
@@ -130,6 +134,11 @@ class Cpu(private val gb: KotBoy) {
             op = Op(OpCode[opcode])
         }
 
+//        if (!haltBug) PC++
+//        else haltBug = false
+
+//        if (op.argsSize() < 0) return 0
+
         val args = IntArray(op.argsSize())
         for (i in 0 until args.size) {
             args[i] = this.mmu[PC++]
@@ -141,8 +150,9 @@ class Cpu(private val gb: KotBoy) {
 //        }
 //        println(out)
 
-        val processor = Processor()
         processor.run(op.opCode, this, mmu, *args)
+
+        handleInterrupt()
 
         return op.opCode.cycles()
     }
@@ -152,10 +162,10 @@ class Cpu(private val gb: KotBoy) {
             return false
         }
 
-        val _if = this.mmu[IoReg.IF.address]
+        var _if = this.mmu[IoReg.IF.address]
         val ie = this.mmu[IoReg.IE.address]
 
-        val ieif = (ie and _if).toByte()
+        val ieif = ie and _if
 
         if (ieif and 0x1F != 0) {
             this.ime = false
@@ -163,26 +173,27 @@ class Cpu(private val gb: KotBoy) {
 
             val handler = when {
                 (ieif and 0x01) != 0 -> {
-                    this.mmu[IoReg.IF.address] = 0x01.inv()
+                    _if = _if and 0x01.inv()
                     MemoryMap.V_BLANK_INTERRUPT.startAddress
                 }
                 (ieif and 0x02) != 0 -> {
-                    this.mmu[IoReg.IF.address] = 0x02.inv()
+                    _if = _if and 0x02.inv()
                     MemoryMap.LCDC_STATUS_INTERRUPT.startAddress
                 }
                 (ieif and 0x04) != 0 -> {
-                    this.mmu[IoReg.IF.address] = 0x04.inv()
+                    _if = _if and 0x04.inv()
                     MemoryMap.TIMER_OVERFLOW_INTERRUPT.startAddress
                 }
                 (ieif and 0x08) != 0 -> {
-                    this.mmu[IoReg.IF.address] = 0x08.inv()
+                    _if = _if and 0x08.inv()
                     MemoryMap.SERIAL_TRANSFER_COMPLETION_INTERRUPT.startAddress
                 }
                 else -> {
-                    this.mmu[IoReg.IF.address] = 0x10.inv()
+                    _if = _if and 0x10.inv()
                     MemoryMap.HI_LO_P10_P13_INTERRUPT.startAddress
                 }
             }
+            this.mmu[IoReg.IF.address] = _if
             this.PC = handler
             return true
         }
@@ -218,17 +229,18 @@ class Cpu(private val gb: KotBoy) {
         val A = read(Reg8.A)
         var res = A.toUnsignedInt()
         if (!hasFlag(Flag.N)) {
-            if (hasFlag(Flag.H) || (A and 0x0F) > 9) res += 0x06
-            if (hasFlag(Flag.C) || (A and 0xF0) > 0x90) res += 0x60
+            if (hasFlag(Flag.H) || (res and 0x0F) > 9) res += 0x06
+            if (hasFlag(Flag.C) || res > 0x9F) res += 0x60
         } else {
-            if (hasFlag(Flag.H)) res = (res - 6).lsb()
+            if (hasFlag(Flag.H)) res = (res - 6).toUnsignedInt()
             if (hasFlag(Flag.C)) res -= 0x60
         }
         setFlag(Flag.H, false)
-        if ((res and 0x100) == 0x100) {
+        if ((res and 0x100) != 0) {
             setFlag(Flag.C)
         }
-        if (res.lsb() == 0) setFlag(Flag.Z)
+        if (res.toUnsignedInt() == 0) setFlag(Flag.Z)
+        print(" " + res.hexString())
         write(Reg8.A, res.toByte())
     }
 
@@ -255,11 +267,11 @@ class Cpu(private val gb: KotBoy) {
     fun nop() = Unit
 
     fun halt() {
-//        val _if = this.mmu[IoReg.IF.address]
-//        val ie = this.mmu[IoReg.IE.address]
-//
-//        this.halted = this.ime || (ie and _if and 0x1F) == 0
-//        this.haltBug = !this.halted
+        val _if = this.mmu[IoReg.IF.address]
+        val ie = this.mmu[IoReg.IE.address]
+
+        this.halted = this.ime || (ie and _if and 0x1F) == 0
+        this.haltBug = !this.halted
     }
 
     fun stop() {
@@ -637,13 +649,7 @@ class Cpu(private val gb: KotBoy) {
         }
 
         fun sub_n(arg: Int) {
-            val A = read(Reg8.A)
-            val res = A - arg.toUnsignedInt()
-            setFlag(Flag.Z, res and 0xFF == 0)
-            setFlag(Flag.N, true)
-            setFlag(Flag.H, ((A and 0x0F) - (arg and 0x0F)) and 0x10 != 0)
-            setFlag(Flag.C, ((A and 0xFF) - (arg and 0xFF)) and 0x100 != 0)
-            write(Reg8.A, res.toByte())
+            write(Reg8.A, cp_n(arg).toByte())
         }
 
         fun sbc_A_n(reg: Reg8) = sbc_A_n(read(reg).toUnsignedInt())
@@ -663,12 +669,18 @@ class Cpu(private val gb: KotBoy) {
             return write(Reg8.A, res.toByte())
         }
 
-        fun cp_n(reg: Reg8) = cp_n(read(reg).toUnsignedInt())
+        fun cp_n(reg: Reg8): Int = cp_n(read(reg).toUnsignedInt())
 
-        fun cp_n(arg: Byte) = cp_n(arg.toUnsignedInt())
+        fun cp_n(arg: Byte): Int = cp_n(arg.toUnsignedInt())
 
-        fun cp_n(arg: Int) {
-            sub_n(arg)
+        fun cp_n(arg: Int): Int {
+            val A = read(Reg8.A)
+            val res = A - arg.toUnsignedInt()
+            setFlag(Flag.Z, res and 0xFF == 0)
+            setFlag(Flag.N, true)
+            setFlag(Flag.H, ((A and 0x0F) - (arg and 0x0F)) and 0x10 != 0)
+            setFlag(Flag.C, ((A and 0xFF) - (arg and 0xFF)) and 0x100 != 0)
+            return res
         }
 
         fun add_HL_n(reg: Reg16) = add_HL_n(read(reg))

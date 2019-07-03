@@ -1,11 +1,27 @@
 package com.arman.kotboy.io
 
+import com.arman.kotboy.KotBoy
+import com.arman.kotboy.io.input.ButtonListener
 import com.arman.kotboy.memory.Address
+import com.arman.kotboy.memory.MemoryMap
 import java.util.*
 
-class Joypad : IoDevice(IoReg.P1.address) {
+class Joypad(private val gb: KotBoy) : IoDevice(IoReg.P1.address) {
 
-    private val pressedKeys: EnumSet<Key> = EnumSet.noneOf(Key::class.java)
+    val pressedKeys: EnumSet<Key> = EnumSet.noneOf(Key::class.java)
+
+    init {
+        gb.inputHandler.buttonListener = object : ButtonListener {
+            override fun onPress(key: Key) {
+                pressedKeys.add(key)
+                gb.cpu.interrupt(MemoryMap.HI_LO_P10_P13_INTERRUPT)
+            }
+
+            override fun onRelease(key: Key) {
+                pressedKeys.remove(key)
+            }
+        }
+    }
 
     override fun reset() {
         this.pressedKeys.clear()
@@ -13,6 +29,11 @@ class Joypad : IoDevice(IoReg.P1.address) {
 
     override fun set(address: Address, value: Int): Boolean {
         return super.set(address, value and 0b00110000)
+    }
+
+    override fun tick(cycles: Int): Boolean {
+        super.tick(cycles)
+        return false
     }
 
     override fun get(address: Address): Int {

@@ -561,12 +561,12 @@ class Processor {
     private fun nop_00(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.nop()
     private fun prefix_cb(cpu: Cpu, mmu: Mmu, vararg args: Int) = Unit
 
-    private fun ld_06(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.B, args[0].toUnsignedInt())
-    private fun ld_0e(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.C, args[0].toUnsignedInt())
-    private fun ld_16(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.D, args[0].toUnsignedInt())
-    private fun ld_1e(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.E, args[0].toUnsignedInt())
-    private fun ld_26(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.H, args[0].toUnsignedInt())
-    private fun ld_2e(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.L, args[0].toUnsignedInt())
+    private fun ld_06(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.B, args[0])
+    private fun ld_0e(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.C, args[0])
+    private fun ld_16(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.D, args[0])
+    private fun ld_1e(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.E, args[0])
+    private fun ld_26(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.H, args[0])
+    private fun ld_2e(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.L, args[0])
 
     private fun ld_40(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.B, cpu.read(Reg8.B))
     private fun ld_41(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg8.B, cpu.read(Reg8.C))
@@ -706,7 +706,7 @@ class Processor {
 
     private fun ld_22(cpu: Cpu, mmu: Mmu, vararg args: Int) {
         val hl = cpu.read(Reg16.HL)
-        mmu.set(hl, cpu.read(Reg8.A).toUnsignedInt())
+        mmu[hl] = cpu.read(Reg8.A).toUnsignedInt()
         cpu.write(Reg16.HL, hl + 1)
     }
 
@@ -714,7 +714,7 @@ class Processor {
         mmu.set(0xFF00 + args[0], cpu.read(Reg8.A).toUnsignedInt())
 
     private fun ldh_f0(cpu: Cpu, mmu: Mmu, vararg args: Int) =
-        cpu.write(Reg8.A, mmu.get(0xFF00 + args[0]).toUnsignedInt())
+        cpu.write(Reg8.A, mmu[0xFF00 + args[0]].toUnsignedInt())
 
     private fun ld_01(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg16.BC, args.toWord())
     private fun ld_11(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.write(Reg16.DE, args.toWord())
@@ -832,7 +832,7 @@ class Processor {
     private fun cp_bb(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.cp_n(cpu.read(Reg8.E))
     private fun cp_bc(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.cp_n(cpu.read(Reg8.H))
     private fun cp_bd(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.cp_n(cpu.read(Reg8.L))
-    private fun cp_be(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.cp_n(mmu.get(cpu.read(Reg16.HL)).toUnsignedInt())
+    private fun cp_be(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.cp_n(mmu[cpu.read(Reg16.HL)].toUnsignedInt())
     private fun cp_fe(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.cp_n(args[0].toUnsignedInt())
 
     private fun inc_3c(cpu: Cpu, mmu: Mmu, vararg args: Int) = cpu.alu.inc_n(Reg8.A)

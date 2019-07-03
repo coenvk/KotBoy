@@ -11,10 +11,7 @@ class Div : IoDevice(IoReg.DIV.address) {
         var div = get(IoReg.DIV.address)
         while (this.cycles >= update) {
             this.cycles -= update
-            div += 1
-            if (div > 0xFF) {
-                div = 0
-            }
+            div = (div + 1).rem(0x100)
         }
         super.set(IoReg.DIV.address, div)
         return true
