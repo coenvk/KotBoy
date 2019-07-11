@@ -1,6 +1,8 @@
 package com.arman.kotboy.io.input
 
-interface InputHandler {
+import java.awt.event.KeyListener
+
+interface InputHandler : KeyListener {
 
     var buttonListener: ButtonListener?
 

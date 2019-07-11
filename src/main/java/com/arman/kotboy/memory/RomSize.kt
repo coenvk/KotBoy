@@ -13,6 +13,10 @@ enum class RomSize(val index: Int, val banks: Int) {
     MB_1_2(0x53, 80),
     MB_1_5(0x54, 96);
 
+    fun size(): Int {
+        return (32 shl index) * 1024
+    }
+
     fun kbyte(): Int {
         return BANK_KBYTES * this.banks
     }

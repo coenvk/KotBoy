@@ -1,11 +1,9 @@
 package com.arman.kotboy.gpu
 
-import com.arman.kotboy.memory.AddressSpace
-import com.arman.kotboy.KotBoy
-import com.arman.kotboy.memory.Address
-import com.arman.kotboy.memory.Ram
+import com.arman.kotboy.GameBoy
+import com.arman.kotboy.memory.*
 
-class Gpu(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
+class Gpu(private val gb: GameBoy) : Memory {
 
     companion object {
         const val TILE_SIZE = 8
@@ -18,21 +16,38 @@ class Gpu(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
         const val WINDOW_TILE_TABLE_1 = 0x9C00
     }
 
-    val vram: AddressSpace = Ram(0x8000, 0x9FFF)
-    val oam: AddressSpace = Ram(0xFE00, 0xFE9F)
+    val vram: AddressSpace = Vram()
+    val oam: AddressSpace = Oam()
 
-    override fun accepts(address: Address): Boolean {
+    override fun accepts(address: Int): Boolean {
         return this.vram.accepts(address) || this.oam.accepts(address)
     }
 
-    override fun get(address: Address): Int {
+    override fun get(address: Int): Int {
         return if (this.vram.accepts(address)) this.vram[address]
         else this.oam[address]
     }
 
-    override fun set(address: Address, value: Int): Boolean {
+    override fun set(address: Int, value: Int): Boolean {
         return if (this.vram.accepts(address)) this.vram.set(address, value)
         else this.oam.set(address, value)
+    }
+
+    override fun range(): IntRange = IntRange(this.vram.range().first, this.oam.range().last)
+
+    override fun fill(value: Int) {
+        this.vram.fill(value)
+        this.oam.fill(value)
+    }
+
+    override fun reset() {
+        this.vram.reset()
+        this.oam.reset()
+    }
+
+    override fun clear() {
+        this.vram.clear()
+        this.oam.clear()
     }
 
 }

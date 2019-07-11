@@ -1,15 +1,14 @@
 package com.arman.kotboy.debug
 
 import com.arman.kotboy.RomReader
-import com.arman.kotboy.cpu.ExtOpCode
-import com.arman.kotboy.cpu.Op
+import com.arman.kotboy.cpu.Instr
 import com.arman.kotboy.cpu.OpCode
 import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.memory.cartridge.Cartridge
 
 class Disassembler {
 
-    private val cart: Cartridge = Cartridge(*RomReader("dr-mario.gb").read())
+    private val cart: Cartridge = Cartridge(*RomReader("blargg\\01-special.gb").read())
 
     private var PC: Int = 0
 
@@ -20,21 +19,21 @@ class Disassembler {
 
             var opcode = this.cart[PC++]
 
-            val op: Op
+            val instr: Instr
             if (opcode == OpCode.PREFIX_CB.opcode) {
                 opcode = this.cart[PC++]
-                op = Op(ExtOpCode[opcode])
+                instr = Instr(OpCode[opcode, true])
             } else {
-                op = Op(OpCode[opcode])
+                instr = Instr(OpCode[opcode])
             }
 
-            if (op.argsSize() < 0) continue
+            if (instr.argsSize() < 0) continue
 
-            val args = IntArray(op.argsSize())
+            val args = IntArray(instr.argsSize())
             for (i in 0 until args.size) {
                 args[i] = this.cart[PC++]
             }
-            out += "$line - $op\t"
+            out += "$line - $instr\t"
             for (arg in args) out += "${arg.hexString()} "
             out += "\n"
         }

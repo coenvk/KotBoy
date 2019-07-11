@@ -1,9 +1,9 @@
 package com.arman.kotboy.memory
 
-enum class MemoryMap(val startAddress: Address, val endAddress: Address = startAddress) {
+enum class MemoryMap(val startAddress: Int, val endAddress: Int = startAddress) {
 
     /*
-    Interrupt Enable Register
+    If Enable Register
     --------------------------- FFFF
     Internal RAM
     --------------------------- FF80

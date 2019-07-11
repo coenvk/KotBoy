@@ -1,18 +1,9 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.cpu.util.toUnsignedInt
-import com.arman.kotboy.memory.Address
 
-class Timer : IoDevice(IoReg.DIV.address, IoReg.TAC.address) {
+class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) {
 
-    var div: Int
-        get() {
-            return this[IoReg.DIV.address]
-        }
-        set(value) {
-            this[IoReg.DIV.address] = value
-        }
     var tima: Int
         get() {
             return this[IoReg.TIMA.address]
@@ -40,7 +31,6 @@ class Timer : IoDevice(IoReg.DIV.address, IoReg.TAC.address) {
     }
 
     override fun tick(cycles: Int): Boolean {
-        super.set(IoReg.DIV.address, this.div + cycles)
         if (tac and 0b100 == 0) return false
         super.tick(cycles)
 
@@ -54,23 +44,21 @@ class Timer : IoDevice(IoReg.DIV.address, IoReg.TAC.address) {
         } else false
     }
 
-    override fun set(address: Address, value: Int): Boolean {
+    override fun reset() {
+        super.reset()
+        super.set(IoReg.TIMA.address, 0x00)
+        super.set(IoReg.TMA.address, 0x00)
+        super.set(IoReg.TAC.address, 0xF8)
+    }
+
+    override fun set(address: Int, value: Int): Boolean {
         val v = value.toUnsignedInt()
-        if (address == IoReg.DIV.address) {
-            return super.set(address, 0)
-        } else if (address == IoReg.TAC.address) {
+        if (address == IoReg.TAC.address) {
             if (tac and 0b11 != v and 0b11) {
                 this.cycles = 0
             }
         }
         return super.set(address, v)
     }
-
-    override fun get(address: Address): Int {
-        if (address == IoReg.DIV.address) {
-            return super.get(address) ushr 8
-        }
-        return super.get(address)
-    }
-
+    
 }

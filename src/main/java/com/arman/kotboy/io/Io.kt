@@ -1,37 +1,36 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.KotBoy
-import com.arman.kotboy.cpu.util.hexString
-import com.arman.kotboy.memory.Address
-import com.arman.kotboy.memory.AddressSpace
-import com.arman.kotboy.memory.MemoryByte
-import com.arman.kotboy.memory.MemoryMap
+import com.arman.kotboy.GameBoy
+import com.arman.kotboy.memory.Memory
 
-class Io(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
+class Io(private val gb: GameBoy) : Memory {
 
     var cycles = 0
 
-    val __if = MemoryByte(IoReg.IF.address)
+    private var addressSpaces: MutableList<Memory> = ArrayList()
 
     init {
-        put(Timer())
-        put(Lcd(gb))
-        put(Serial())
-        put(Joypad(gb))
-        put(__if)
-        put(MemoryByte(IoReg.IE.address))
+        put(Joypad(gb)) // 0xFF00
+        put(SerialPort()) // 0xFF01 - 0xFF02
+        put(Div()) // 0xFF04
+        put(Timer()) // 0xFF05 - 0xFF07
+        put(If()) // 0xFF0F
+        put(Lcd(gb)) // 0xFF40 - 0xFF4B
+        put(Ie()) // 0xFFFF
     }
 
-    override fun accepts(address: Address): Boolean {
-        return address in IoReg.P1.address..IoReg.WX.address || address == IoReg.IE.address
+    override fun accepts(address: Int): Boolean {
+        return this.addressSpaces.any { it.accepts(address) }
+    }
+
+    private fun put(addressSpace: Memory, i: Int = this.addressSpaces.size): Boolean {
+        this.addressSpaces.add(i, addressSpace)
+        return true
     }
 
     override fun reset() {
-        super.reset()
         this.cycles = 0
-        this.__if.set(0xE1)
-        this[IoReg.LCDC.address] = 0x91
-        this[IoReg.STAT.address] = 0x85
+        this.addressSpaces.forEach { it.reset() }
     }
 
     fun tick(cycles: Int) {
@@ -40,7 +39,7 @@ class Io(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
             val device = it as? IoDevice
             if (device is Timer) {
                 if (device.tick(cycles)) {
-                    gb.cpu.interrupt(MemoryMap.TIMER_OVERFLOW_INTERRUPT)
+                    gb.cpu.interrupt(Interrupt.Timer)
                 }
             } else if (device is Lcd) {
                 if (device.isLcdEnabled()) {
@@ -49,25 +48,39 @@ class Io(private val gb: KotBoy) : AddressSpace(0xFFFFFF) {
                         device.tick(cycles)
                     }
                 }
+            } else if (device is SerialPort) {
+                if (device.tick(cycles)) {
+                    gb.cpu.interrupt(Interrupt.Serial)
+                }
             } else if (device is Joypad) {
                 if (device.tick(cycles)) {
-                    gb.cpu.interrupt(MemoryMap.HI_LO_P10_P13_INTERRUPT)
+                    gb.cpu.interrupt(Interrupt.Joypad)
                 }
             } else device?.tick(cycles)
         }
     }
 
-    override fun set(address: Address, value: Int): Boolean {
+    override fun set(address: Int, value: Int): Boolean {
         val space = getSpace(address)
-        if (address == IoReg.IF.address) {
-            return space?.set(address, value or 0xE0) ?: false
-        }
         return space?.set(address, value) ?: false
     }
 
-    override fun get(address: Address): Int {
+    override fun get(address: Int): Int {
         val space = getSpace(address)
-        return space?.get(address) ?: 0
+        return space?.get(address) ?: 0xFF
+    }
+
+    override fun range(): IntRange = IoReg.P1.address..IoReg.WX.address
+
+    override fun fill(value: Int) = this.addressSpaces.forEach { it.fill(value) }
+
+    override fun clear() = this.addressSpaces.forEach { it.clear() }
+
+    private fun getSpace(address: Int): Memory? {
+        this.addressSpaces.forEach {
+            if (it.accepts(address)) return it
+        }
+        return null
     }
 
 }

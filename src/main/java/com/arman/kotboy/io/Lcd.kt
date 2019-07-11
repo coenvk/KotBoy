@@ -1,19 +1,16 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.KotBoy
+import com.arman.kotboy.GameBoy
 import com.arman.kotboy.cpu.util.at
-import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.cpu.util.toInt
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.gpu.Gpu
 import com.arman.kotboy.gpu.GrayPalette
 import com.arman.kotboy.gui.Display
-import com.arman.kotboy.memory.Address
 import com.arman.kotboy.memory.AddressSpace
-import com.arman.kotboy.memory.MemoryMap
 import java.io.Serializable
 
-class Lcd(private val gb: KotBoy) :
+class Lcd(private val gb: GameBoy) :
     IoDevice(IoReg.LCDC.address, IoReg.WX.address) {
 
     enum class Mode(val cycles: Int) {
@@ -122,21 +119,23 @@ class Lcd(private val gb: KotBoy) :
 
     override fun reset() {
         super.reset()
-        super.set(IoReg.LCDC.address, 0b10000001)
-        super.set(IoReg.STAT.address, 0b00000011)
-        super.set(IoReg.SCX.address, 0)
-        super.set(IoReg.SCY.address, 0)
-        super.set(IoReg.WX.address, 0)
-        super.set(IoReg.WY.address, 0)
+        super.set(IoReg.LCDC.address, 0x91)
+        super.set(IoReg.STAT.address, 0x85)
+        super.set(IoReg.LY.address, 0x00)
+        super.set(IoReg.LYC.address, 0x00)
+        super.set(IoReg.SCX.address, 0x00)
+        super.set(IoReg.SCY.address, 0x00)
+        super.set(IoReg.WX.address, 0x00)
+        super.set(IoReg.WY.address, 0x00)
         super.set(IoReg.BGP.address, 0xFC)
         super.set(IoReg.OBP0.address, 0xFF)
         super.set(IoReg.OBP1.address, 0xFF)
 
-        this.mode = Mode.OamSearch
+        this.mode = Mode.VBlank
         this.cycles = this.mode.cycles
     }
 
-    override fun set(address: Address, value: Int): Boolean {
+    override fun set(address: Int, value: Int): Boolean {
         return when (address) {
             IoReg.DMA.address -> {
                 val src = value shl 8
@@ -161,6 +160,13 @@ class Lcd(private val gb: KotBoy) :
             }
             else -> super.set(address, value)
         }
+    }
+
+    override fun get(address: Int): Int {
+        if (address == IoReg.DMA.address) {
+            return 0xFF
+        }
+        return super.get(address)
     }
 
     private fun discoverSprites() {
@@ -193,14 +199,14 @@ class Lcd(private val gb: KotBoy) :
         this.mode = mode
 
         if (mode == Mode.VBlank) {
-            gb.cpu.interrupt(MemoryMap.V_BLANK_INTERRUPT)
+            gb.cpu.interrupt(Interrupt.VBlank)
             if (isVBlankCheckEnabled()) {
-                gb.cpu.interrupt(MemoryMap.LCDC_STATUS_INTERRUPT)
+                gb.cpu.interrupt(Interrupt.Lcdc)
             }
         }
 
         if ((isHBlankCheckEnabled() && mode == Mode.HBlank) || (isOamSearchCheckEnabled() && mode == Mode.OamSearch)) {
-            gb.cpu.interrupt(MemoryMap.LCDC_STATUS_INTERRUPT)
+            gb.cpu.interrupt(Interrupt.Lcdc)
         }
     }
 
@@ -217,9 +223,9 @@ class Lcd(private val gb: KotBoy) :
                         setMode(Mode.HBlank)
                     }
                     Mode.HBlank, Mode.VBlank -> {
-                        this.ly = (this.ly.toUnsignedInt() + 1).rem(154)
+                        this.ly = (this.ly.toUnsignedInt() + 1).rem(154).toUnsignedInt()
 
-                        if (isScanlineCheckEnabled() && ly == lyc) gb.cpu.interrupt(MemoryMap.LCDC_STATUS_INTERRUPT)
+                        if (isScanlineCheckEnabled() && ly == lyc) gb.cpu.interrupt(Interrupt.Lcdc)
 
                         if (this.ly.toUnsignedInt() == 144) {
                             setMode(Mode.VBlank)
@@ -287,7 +293,8 @@ class Lcd(private val gb: KotBoy) :
                 this.sprites.forEach loop@{ that ->
                     that?.let {
                         if (px >= it.x && px < it.x + 8) {
-                            val x = px - it.x
+                            var x = px - it.x
+                            if (it.xflip) x = 7 - x
                             val pi = ((it.y ushr (15 - x)) and 1) or (((it.y ushr (7 - x)) shl 1) and 2)
                             if (pi != 0 && (bgIdx == 0 || it.hasPriority)) {
                                 color = GrayPalette[(it.palette ushr (pi * 2)) and 3]
@@ -365,7 +372,7 @@ class Lcd(private val gb: KotBoy) :
     }
 
     fun isScanlineEqual(): Boolean {
-        return this.stat.toByte().at(2) || this.ly == this.lyc // TODO: either one
+        return this.ly == this.lyc
     }
 
     fun isHBlankCheckEnabled(): Boolean {
@@ -391,16 +398,20 @@ class Lcd(private val gb: KotBoy) :
         var y: Int = 0
         var palette: Int = 0
         var tileId: Int = 0
+        var yflip: Boolean = false
+        var xflip: Boolean = false
 
         fun update(y: Int, x: Int, tileId: Int, flags: Int) {
             this.tileId = tileId
             this.x = x
             this.hasPriority = ((flags and 0x80) == 0)
             this.palette = if ((flags and 0x10) == 0) obp0 else obp1
-            this.y = getRow(tileId, y, ((flags and 0x40) != 0), ((flags and 0x20) != 0))
+            this.yflip = ((flags and 0x40) != 0)
+            this.xflip = ((flags and 0x20) != 0)
+            this.y = getRow(tileId, y)
         }
 
-        private fun getRow(tileId: Int, y: Int, yflip: Boolean, xflip: Boolean): Int {
+        private fun getRow(tileId: Int, y: Int): Int {
             var row = ly.toUnsignedInt() - y
             var tid = tileId
             if (getSpriteHeight() == 16) {
@@ -413,16 +424,7 @@ class Lcd(private val gb: KotBoy) :
                 row = 7 - row
             }
             val bmp = getBitmapSliver(tid.toUnsignedInt(), row.rem(0x08), Gpu.TILE_PATTERN_TABLE_1)
-            if (xflip) {
-                return flip((bmp ushr 8).toUnsignedInt()) shl 8 or flip(bmp.toUnsignedInt())
-            }
             return bmp
-        }
-
-        private fun flip(b: Int): Int {
-            var a = (b and 0xAA) ushr 1 or (b and 0x55) shl 1
-            a = (a and 0xCC) ushr 2 or (a and 0x33) shl 2
-            return (a ushr 4 or a shl 4).toUnsignedInt()
         }
 
     }

@@ -1,12 +1,6 @@
 package com.arman.kotboy.gpu
 
-import com.arman.kotboy.memory.Address
-
-class GrayPalette : ColorPalette(0) {
-
-    override fun set(address: Address, value: Int): Boolean {
-        return false
-    }
+class GrayPalette : ColorPalette() {
 
     companion object {
 
@@ -25,6 +19,5 @@ class GrayPalette : ColorPalette(0) {
         }
 
     }
-
 
 }

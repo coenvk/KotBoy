@@ -30,5 +30,4 @@ object Specs {
 
     const val POWER = 0.7 // W
 
-
 }

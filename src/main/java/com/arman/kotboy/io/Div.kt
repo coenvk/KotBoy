@@ -1,27 +1,30 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.memory.Address
-
 class Div : IoDevice(IoReg.DIV.address) {
 
     private val update: Int = 256
 
     override fun tick(cycles: Int): Boolean {
         super.tick(cycles)
-        var div = get(IoReg.DIV.address)
+        var div = super.get(IoReg.DIV.address)
         while (this.cycles >= update) {
             this.cycles -= update
-            div = (div + 1).rem(0x100)
+            div++
         }
         super.set(IoReg.DIV.address, div)
         return true
     }
 
-    override fun set(address: Address, value: Int): Boolean {
-        return super.set(address, 0)
+    override fun reset() {
+        super.reset()
+        super.set(IoReg.DIV.address, 0x00)
     }
 
-    override fun get(address: Address): Int {
+    override fun set(address: Int, value: Int): Boolean {
+        return super.set(address, 0x00)
+    }
+
+    override fun get(address: Int): Int {
         return super.get(address) ushr 8
     }
 

@@ -1,12 +1,10 @@
 package com.arman.kotboy.io
 
-import com.arman.kotboy.KotBoy
+import com.arman.kotboy.GameBoy
 import com.arman.kotboy.io.input.ButtonListener
-import com.arman.kotboy.memory.Address
-import com.arman.kotboy.memory.MemoryMap
 import java.util.*
 
-class Joypad(private val gb: KotBoy) : IoDevice(IoReg.P1.address) {
+class Joypad(private val gb: GameBoy) : IoDevice(IoReg.P1.address) {
 
     val pressedKeys: EnumSet<Key> = EnumSet.noneOf(Key::class.java)
 
@@ -14,7 +12,7 @@ class Joypad(private val gb: KotBoy) : IoDevice(IoReg.P1.address) {
         gb.inputHandler.buttonListener = object : ButtonListener {
             override fun onPress(key: Key) {
                 pressedKeys.add(key)
-                gb.cpu.interrupt(MemoryMap.HI_LO_P10_P13_INTERRUPT)
+                gb.cpu.interrupt(Interrupt.Joypad)
             }
 
             override fun onRelease(key: Key) {
@@ -24,10 +22,11 @@ class Joypad(private val gb: KotBoy) : IoDevice(IoReg.P1.address) {
     }
 
     override fun reset() {
+        super.reset()
         this.pressedKeys.clear()
     }
 
-    override fun set(address: Address, value: Int): Boolean {
+    override fun set(address: Int, value: Int): Boolean {
         return super.set(address, value and 0b00110000)
     }
 
@@ -36,7 +35,7 @@ class Joypad(private val gb: KotBoy) : IoDevice(IoReg.P1.address) {
         return false
     }
 
-    override fun get(address: Address): Int {
+    override fun get(address: Int): Int {
         val p1 = super.get(address)
         var res = p1 or 0b11001111
         this.pressedKeys.forEach {

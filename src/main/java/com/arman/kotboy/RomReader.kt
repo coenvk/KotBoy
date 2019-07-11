@@ -1,7 +1,5 @@
 package com.arman.kotboy
 
-import com.arman.kotboy.cpu.util.contentToHexString
-import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import java.io.File
 import java.io.FileInputStream
@@ -12,7 +10,7 @@ import java.util.zip.ZipInputStream
 
 class RomReader(private val file: File) {
 
-    constructor(name: String) : this(File("src/test/resources/roms/$name"))
+    constructor(rom: String) : this(File(rom))
 
     private fun isExtension(name: String, vararg exts: String): Boolean {
         return if (name.contains('.')) {

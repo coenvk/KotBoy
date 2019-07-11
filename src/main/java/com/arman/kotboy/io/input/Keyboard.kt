@@ -1,10 +1,9 @@
 package com.arman.kotboy.io.input
 
 import com.arman.kotboy.io.Joypad
-import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 
-class Keyboard(override var buttonListener: ButtonListener? = null) : InputHandler, KeyAdapter() {
+class Keyboard(override var buttonListener: ButtonListener? = null) : InputHandler {
 
     private val mapping by lazy {
         val map = HashMap<Int, Joypad.Key>()
@@ -18,6 +17,8 @@ class Keyboard(override var buttonListener: ButtonListener? = null) : InputHandl
         map[KeyEvent.VK_SHIFT] = Joypad.Key.SELECT
         return@lazy map
     }
+
+    override fun keyTyped(e: KeyEvent) = Unit
 
     override fun keyPressed(e: KeyEvent) {
         val key = getKey(e)

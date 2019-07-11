@@ -1,13 +1,12 @@
 package com.arman.kotboy.memory.cartridge.mbc
 
 import com.arman.kotboy.cpu.util.toUnsignedInt
-import com.arman.kotboy.memory.Address
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
 
-class Mbc5(rom: Rom, ram: Ram) : Mbc(rom, ram) {
+class Mbc5(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
 
-    override fun write(address: Address, value: Int): Boolean {
+    override fun write(address: Int, value: Int): Boolean {
         if (address in 0x0..0x1fff) {
             this.ramEnabled = (value and 0x0A) == 0x0A
         } else if (address in 0x2000..0x2fff) {
