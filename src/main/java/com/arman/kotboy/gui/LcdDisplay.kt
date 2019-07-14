@@ -20,7 +20,6 @@ class LcdDisplay : Display, JPanel() {
         this.img.setRGB(0, 0, Display.WIDTH, Display.HEIGHT, buffer, 0, Display.WIDTH)
         this.validate()
         this.repaint()
-//        Thread.sleep(8) // TODO: delay in different way
     }
 
     override fun paintComponent(g: Graphics) {

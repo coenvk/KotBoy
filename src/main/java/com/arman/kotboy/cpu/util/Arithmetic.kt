@@ -1,5 +1,7 @@
 package com.arman.kotboy.cpu.util
 
+import com.arman.kotboy.cpu.Operand
+
 fun Byte.hexString(): String = "$${this.toString(16).toUpperCase()}"
 
 fun Byte.bitString(): String = "$${this.toString(2)}"
@@ -17,6 +19,7 @@ fun Int.hexString(length: Int): String = "$${this.toString(16).toUpperCase().pad
 fun Int.bitString(): String = "$${this.toString(2)}"
 
 fun IntArray.contentToHexString(): String {
+    if (this.isEmpty()) return "[]"
     var out = "["
     for (i in 0 until this.size - 1) {
         out += "${this[i].hexString()}, "
