@@ -9,10 +9,15 @@ import com.arman.kotboy.io.input.InputHandler
 import com.arman.kotboy.memory.Mmu
 import com.arman.kotboy.memory.cartridge.Cartridge
 import java.awt.event.KeyEvent
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 class GameBoy(private val options: Options, val display: Display, val inputHandler: InputHandler) : Runnable {
 
     val cart: Cartridge = Cartridge(options)
+
+    private val lock = ReentrantLock()
+    private val unPauseCondition = lock.newCondition()
 
     constructor(options: Options, inputHandler: InputHandler) : this(
         options,
@@ -42,11 +47,6 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
 
     constructor(rom: String) : this(Options(rom))
 
-    companion object {
-        const val BASE_CLOCK = 4096
-        const val CLOCK = BASE_CLOCK * 1000 / 60
-    }
-
     val io: Io = Io(this)
     val gpu: Gpu = Gpu(this)
     val cpu: Cpu = Cpu(this)
@@ -54,6 +54,14 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
 
     var stopped: Boolean = false
     var running: Boolean = false
+
+    @Volatile
+    var paused: Boolean = false
+        set(value) {
+            field = value
+            if (!value) lock.withLock { unPauseCondition.signalAll() }
+        }
+
 
     fun reset() {
         this.cpu.reset()
@@ -67,6 +75,13 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
         }
         this.running = true
         while (this.running) {
+            if (this.paused) {
+                lock.withLock {
+                    while (this.paused) {
+                        unPauseCondition.await()
+                    }
+                }
+            }
             if (!stopped) {
                 val start = System.currentTimeMillis()
                 val timeBetweenFrames = 1000 / Cpu.FRAME_RATE

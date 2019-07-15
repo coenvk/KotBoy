@@ -2,23 +2,24 @@ package com.arman.kotboy.memory.cartridge
 
 import com.arman.kotboy.Options
 import com.arman.kotboy.RomReader
+import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.memory.*
 import com.arman.kotboy.memory.cartridge.mbc.*
 
-class Cartridge(vararg values: Int) : Memory {
+class Cartridge(vararg values: Int, private var bootstrap: Boolean = false) : Memory {
 
-    constructor(file: String) : this(*RomReader(file).read())
-    constructor(options: Options) : this(options.file.absolutePath)
+    constructor(file: String, bootstrap: Boolean) : this(*RomReader(file).read(), bootstrap = bootstrap)
+    constructor(options: Options) : this(options.file.absolutePath, options.bootstrap)
 
     private val type: CartridgeType by lazy {
-        CartridgeType[values[0x0147]]
+        CartridgeType[values[MemoryMap.CARTRIDGE_TYPE.startAddress]]
     }
 
     val title: String
 
     val colorMode: ColorMode by lazy {
-        when (values[0x143]) {
+        when (values[MemoryMap.CGB.startAddress]) {
             0x80, 0xC0 -> {
                 ColorMode.CGB
             }
@@ -29,26 +30,26 @@ class Cartridge(vararg values: Int) : Memory {
     }
 
     val sgbIndicator: Boolean by lazy {
-        values[0x146] == 3
+        values[MemoryMap.SGB.startAddress] == 3
     }
 
     val romSize: RomSize by lazy {
-        RomSize[values[0x148].toUnsignedInt()]
+        RomSize[values[MemoryMap.ROM_SIZE.startAddress].toUnsignedInt()]
     }
 
     val ramSize: RamSize by lazy {
-        RamSize[values[0x149]]
+        RamSize[values[MemoryMap.RAM_SIZE.startAddress]]
     }
 
     val destinationCode: DestinationCode by lazy {
-        DestinationCode.values()[values[0x14A]]
+        DestinationCode.values()[values[MemoryMap.DESTINATION_CODE.startAddress]]
     }
 
     private val mbc: Mbc
 
     init {
         val sb = StringBuilder()
-        for (i in 0x134..0x142) {
+        for (i in MemoryMap.GAME_TITLE.startAddress..MemoryMap.GAME_TITLE.endAddress) {
             val c = values[i]
             if (c == 0) {
                 break
@@ -72,10 +73,14 @@ class Cartridge(vararg values: Int) : Memory {
         }
     }
 
-    override fun set(address: Int, value: Int): Boolean = this.mbc.set(address, value)
+    override fun set(address: Int, value: Int): Boolean {
+        if (address == 0xFF50 && value == 0x01) {
+            bootstrap = false
+        }
+        return this.mbc.set(address, value)
+    }
 
     override fun get(address: Int): Int {
-        val bootstrap: Boolean = false
         return if (bootstrap && colorMode != ColorMode.CGB && (address in 0x0 until 0x100)) {
             BootRom.DMG[address]
         } else if (bootstrap && colorMode == ColorMode.CGB && (address in 0x0 until 0x100)) {
@@ -85,6 +90,10 @@ class Cartridge(vararg values: Int) : Memory {
         } else {
             return mbc[address]
         }
+    }
+
+    override fun accepts(address: Int): Boolean {
+        return super.accepts(address) || address == 0xFF50
     }
 
     override fun fill(value: Int) = this.mbc.fill(value)

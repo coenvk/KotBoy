@@ -44,6 +44,11 @@ enum class IoReg(val address: Int) {
     OBP1(0xFF49),
     WY(0xFF4A),
     WX(0xFF4B),
+    HDMA1(0xFF51),
+    HDMA2(0xFF52),
+    HDMA3(0xFF53),
+    HDMA4(0xFF54),
+    HDMA5(0xFF55),
     IE(0xFFFF);
 
 }

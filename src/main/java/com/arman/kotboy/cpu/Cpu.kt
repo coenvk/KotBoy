@@ -7,6 +7,7 @@ import com.arman.kotboy.io.Interrupt
 import com.arman.kotboy.io.IoReg
 import com.arman.kotboy.memory.Mmu
 import kotlin.experimental.inv
+import kotlin.system.exitProcess
 
 @Suppress("FunctionName", "LocalVariableName", "PropertyName")
 class Cpu(private val gb: GameBoy) {
@@ -856,7 +857,11 @@ class Cpu(private val gb: GameBoy) {
     fun ld_75(vararg args: Operand) =
         mmu.set(read(Reg16.HL), read(Reg8.L).toUnsignedInt())
 
-    fun ld_36(vararg args: Operand) = mmu.set(read(Reg16.HL), args[0].get())
+    fun ld_36(vararg args: Operand) {
+        val addr = args[0].get()
+        gb.io.tick(4)
+        mmu.set(read(Reg16.HL), addr)
+    }
 
     fun ld_7f(vararg args: Operand) = write(Reg8.A, Reg8.A)
     fun ld_78(vararg args: Operand) = write(Reg8.A, Reg8.B)
@@ -875,7 +880,11 @@ class Cpu(private val gb: GameBoy) {
     fun ld_7e(vararg args: Operand) =
         write(Reg8.A, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_fa(vararg args: Operand) = write(Reg8.A, mmu.get(args[0].get()).toUnsignedInt())
+    fun ld_fa(vararg args: Operand) {
+        val addr = args[0].get()
+        gb.io.tick(8)
+        write(Reg8.A, mmu.get(addr).toUnsignedInt())
+    }
     fun ld_3e(vararg args: Operand) = write(Reg8.A, args[0])
 
     fun ld_47(vararg args: Operand) = write(Reg8.B, Reg8.A)
@@ -894,7 +903,11 @@ class Cpu(private val gb: GameBoy) {
     fun ld_77(vararg args: Operand) =
         mmu.set(read(Reg16.HL), read(Reg8.A).toUnsignedInt())
 
-    fun ld_ea(vararg args: Operand) = mmu.set(args[0].get(), read(Reg8.A).toUnsignedInt())
+    fun ld_ea(vararg args: Operand) {
+        val addr = args[0].get()
+        gb.io.tick(8)
+        mmu.set(addr, read(Reg8.A).toUnsignedInt())
+    }
 
     fun ld_f2(vararg args: Operand) =
         write(Reg8.A, mmu.get(0xFF00 + read(Reg8.C).toUnsignedInt()).toUnsignedInt())
@@ -926,11 +939,17 @@ class Cpu(private val gb: GameBoy) {
         write(Reg16.HL, hl + 1)
     }
 
-    fun ldh_e0(vararg args: Operand) =
-        mmu.set(0xFF00 + args[0].get(), read(Reg8.A).toUnsignedInt())
+    fun ldh_e0(vararg args: Operand) {
+        val addr = 0xFF00 + args[0].get()
+        gb.io.tick(4)
+        mmu.set(addr, read(Reg8.A).toUnsignedInt())
+    }
 
-    fun ldh_f0(vararg args: Operand) =
-        write(Reg8.A, mmu[0xFF00 + args[0].get()].toUnsignedInt())
+    fun ldh_f0(vararg args: Operand) {
+        val addr = 0xFF00 + args[0].get()
+        gb.io.tick(4)
+        write(Reg8.A, mmu[addr].toUnsignedInt())
+    }
 
     fun ld_01(vararg args: Operand) = write(Reg16.BC, args[0].get())
     fun ld_11(vararg args: Operand) = write(Reg16.DE, args[0].get())
@@ -1057,8 +1076,12 @@ class Cpu(private val gb: GameBoy) {
     fun inc_1c(vararg args: Operand) = alu.inc_n(Reg8.E)
     fun inc_24(vararg args: Operand) = alu.inc_n(Reg8.H)
     fun inc_2c(vararg args: Operand) = alu.inc_n(Reg8.L)
-    fun inc_34(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), alu.inc_n(mmu.get(read(Reg16.HL))))
+    fun inc_34(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr)
+        gb.io.tick(4)
+        mmu.set(addr, alu.inc_n(value))
+    }
 
     fun dec_3d(vararg args: Operand) = alu.dec_n(Reg8.A)
     fun dec_05(vararg args: Operand) = alu.dec_n(Reg8.B)
@@ -1068,8 +1091,12 @@ class Cpu(private val gb: GameBoy) {
     fun dec_1d(vararg args: Operand) = alu.dec_n(Reg8.E)
     fun dec_25(vararg args: Operand) = alu.dec_n(Reg8.H)
     fun dec_2d(vararg args: Operand) = alu.dec_n(Reg8.L)
-    fun dec_35(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), alu.dec_n(mmu.get(read(Reg16.HL))))
+    fun dec_35(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr)
+        gb.io.tick(4)
+        mmu.set(addr, alu.dec_n(value))
+    }
 
     fun add_09(vararg args: Operand) = alu.add_HL_n(read(Reg16.BC))
     fun add_19(vararg args: Operand) = alu.add_HL_n(read(Reg16.DE))
@@ -1132,8 +1159,13 @@ class Cpu(private val gb: GameBoy) {
     fun rlc_03(vararg args: Operand) = rlc_n(Reg8.E)
     fun rlc_04(vararg args: Operand) = rlc_n(Reg8.H)
     fun rlc_05(vararg args: Operand) = rlc_n(Reg8.L)
-    fun rlc_06(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), rlc_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun rlc_06(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, rlc_n(value).toUnsignedInt())
+    }
 
     fun rl_17(vararg args: Operand) = rl_n(Reg8.A)
     fun rl_10(vararg args: Operand) = rl_n(Reg8.B)
@@ -1142,8 +1174,13 @@ class Cpu(private val gb: GameBoy) {
     fun rl_13(vararg args: Operand) = rl_n(Reg8.E)
     fun rl_14(vararg args: Operand) = rl_n(Reg8.H)
     fun rl_15(vararg args: Operand) = rl_n(Reg8.L)
-    fun rl_16(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), rl_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun rl_16(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, rl_n(value).toUnsignedInt())
+    }
 
     fun rrc_0f(vararg args: Operand) = rrc_n(Reg8.A)
     fun rrc_08(vararg args: Operand) = rrc_n(Reg8.B)
@@ -1152,8 +1189,13 @@ class Cpu(private val gb: GameBoy) {
     fun rrc_0b(vararg args: Operand) = rrc_n(Reg8.E)
     fun rrc_0c(vararg args: Operand) = rrc_n(Reg8.H)
     fun rrc_0d(vararg args: Operand) = rrc_n(Reg8.L)
-    fun rrc_0e(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), rrc_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun rrc_0e(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, rrc_n(value).toUnsignedInt())
+    }
 
     fun rr_1f(vararg args: Operand) = rr_n(Reg8.A)
     fun rr_18(vararg args: Operand) = rr_n(Reg8.B)
@@ -1162,8 +1204,13 @@ class Cpu(private val gb: GameBoy) {
     fun rr_1b(vararg args: Operand) = rr_n(Reg8.E)
     fun rr_1c(vararg args: Operand) = rr_n(Reg8.H)
     fun rr_1d(vararg args: Operand) = rr_n(Reg8.L)
-    fun rr_1e(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), rr_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun rr_1e(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, rr_n(value).toUnsignedInt())
+    }
 
     fun sla_27(vararg args: Operand) = sla_n(Reg8.A)
     fun sla_20(vararg args: Operand) = sla_n(Reg8.B)
@@ -1172,8 +1219,13 @@ class Cpu(private val gb: GameBoy) {
     fun sla_23(vararg args: Operand) = sla_n(Reg8.E)
     fun sla_24(vararg args: Operand) = sla_n(Reg8.H)
     fun sla_25(vararg args: Operand) = sla_n(Reg8.L)
-    fun sla_26(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), sla_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun sla_26(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, sla_n(value).toUnsignedInt())
+    }
 
     fun sra_2f(vararg args: Operand) = sra_n(Reg8.A)
     fun sra_28(vararg args: Operand) = sra_n(Reg8.B)
@@ -1182,8 +1234,13 @@ class Cpu(private val gb: GameBoy) {
     fun sra_2b(vararg args: Operand) = sra_n(Reg8.E)
     fun sra_2c(vararg args: Operand) = sra_n(Reg8.H)
     fun sra_2d(vararg args: Operand) = sra_n(Reg8.L)
-    fun sra_2e(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), sra_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun sra_2e(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, sra_n(value).toUnsignedInt())
+    }
 
     fun srl_3f(vararg args: Operand) = srl_n(Reg8.A)
     fun srl_38(vararg args: Operand) = srl_n(Reg8.B)
@@ -1192,8 +1249,13 @@ class Cpu(private val gb: GameBoy) {
     fun srl_3b(vararg args: Operand) = srl_n(Reg8.E)
     fun srl_3c(vararg args: Operand) = srl_n(Reg8.H)
     fun srl_3d(vararg args: Operand) = srl_n(Reg8.L)
-    fun srl_3e(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), srl_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun srl_3e(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, srl_n(value).toUnsignedInt())
+    }
 
     fun bit_47(vararg args: Operand) = bit_b_r(0, read(Reg8.A))
     fun bit_40(vararg args: Operand) = bit_b_r(0, read(Reg8.B))
@@ -1202,7 +1264,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_43(vararg args: Operand) = bit_b_r(0, read(Reg8.E))
     fun bit_44(vararg args: Operand) = bit_b_r(0, read(Reg8.H))
     fun bit_45(vararg args: Operand) = bit_b_r(0, read(Reg8.L))
-    fun bit_46(vararg args: Operand) = bit_b_r(0, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_46(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(0, mmu.get(addr).toByte())
+    }
 
     fun bit_4f(vararg args: Operand) = bit_b_r(1, read(Reg8.A))
     fun bit_48(vararg args: Operand) = bit_b_r(1, read(Reg8.B))
@@ -1211,7 +1277,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_4b(vararg args: Operand) = bit_b_r(1, read(Reg8.E))
     fun bit_4c(vararg args: Operand) = bit_b_r(1, read(Reg8.H))
     fun bit_4d(vararg args: Operand) = bit_b_r(1, read(Reg8.L))
-    fun bit_4e(vararg args: Operand) = bit_b_r(1, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_4e(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(1, mmu.get(addr).toByte())
+    }
 
     fun bit_57(vararg args: Operand) = bit_b_r(2, read(Reg8.A))
     fun bit_50(vararg args: Operand) = bit_b_r(2, read(Reg8.B))
@@ -1220,7 +1290,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_53(vararg args: Operand) = bit_b_r(2, read(Reg8.E))
     fun bit_54(vararg args: Operand) = bit_b_r(2, read(Reg8.H))
     fun bit_55(vararg args: Operand) = bit_b_r(2, read(Reg8.L))
-    fun bit_56(vararg args: Operand) = bit_b_r(2, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_56(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(2, mmu.get(addr).toByte())
+    }
 
     fun bit_5f(vararg args: Operand) = bit_b_r(3, read(Reg8.A))
     fun bit_58(vararg args: Operand) = bit_b_r(3, read(Reg8.B))
@@ -1229,7 +1303,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_5b(vararg args: Operand) = bit_b_r(3, read(Reg8.E))
     fun bit_5c(vararg args: Operand) = bit_b_r(3, read(Reg8.H))
     fun bit_5d(vararg args: Operand) = bit_b_r(3, read(Reg8.L))
-    fun bit_5e(vararg args: Operand) = bit_b_r(3, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_5e(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(3, mmu.get(addr).toByte())
+    }
 
     fun bit_67(vararg args: Operand) = bit_b_r(4, read(Reg8.A))
     fun bit_60(vararg args: Operand) = bit_b_r(4, read(Reg8.B))
@@ -1238,7 +1316,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_63(vararg args: Operand) = bit_b_r(4, read(Reg8.E))
     fun bit_64(vararg args: Operand) = bit_b_r(4, read(Reg8.H))
     fun bit_65(vararg args: Operand) = bit_b_r(4, read(Reg8.L))
-    fun bit_66(vararg args: Operand) = bit_b_r(4, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_66(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(4, mmu.get(addr).toByte())
+    }
 
     fun bit_6f(vararg args: Operand) = bit_b_r(5, read(Reg8.A))
     fun bit_68(vararg args: Operand) = bit_b_r(5, read(Reg8.B))
@@ -1247,7 +1329,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_6b(vararg args: Operand) = bit_b_r(5, read(Reg8.E))
     fun bit_6c(vararg args: Operand) = bit_b_r(5, read(Reg8.H))
     fun bit_6d(vararg args: Operand) = bit_b_r(5, read(Reg8.L))
-    fun bit_6e(vararg args: Operand) = bit_b_r(5, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_6e(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(5, mmu.get(addr).toByte())
+    }
 
     fun bit_77(vararg args: Operand) = bit_b_r(6, read(Reg8.A))
     fun bit_70(vararg args: Operand) = bit_b_r(6, read(Reg8.B))
@@ -1256,7 +1342,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_73(vararg args: Operand) = bit_b_r(6, read(Reg8.E))
     fun bit_74(vararg args: Operand) = bit_b_r(6, read(Reg8.H))
     fun bit_75(vararg args: Operand) = bit_b_r(6, read(Reg8.L))
-    fun bit_76(vararg args: Operand) = bit_b_r(6, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_76(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(6, mmu.get(addr).toByte())
+    }
 
     fun bit_7f(vararg args: Operand) = bit_b_r(7, read(Reg8.A))
     fun bit_78(vararg args: Operand) = bit_b_r(7, read(Reg8.B))
@@ -1265,7 +1355,11 @@ class Cpu(private val gb: GameBoy) {
     fun bit_7b(vararg args: Operand) = bit_b_r(7, read(Reg8.E))
     fun bit_7c(vararg args: Operand) = bit_b_r(7, read(Reg8.H))
     fun bit_7d(vararg args: Operand) = bit_b_r(7, read(Reg8.L))
-    fun bit_7e(vararg args: Operand) = bit_b_r(7, mmu.get(read(Reg16.HL)).toByte())
+    fun bit_7e(vararg args: Operand) {
+        val addr = read(Reg16.HL)
+        gb.io.tick(4)
+        bit_b_r(7, mmu.get(addr).toByte())
+    }
 
     fun set_c7(vararg args: Operand) = set_b_r(0, Reg8.A)
     fun set_c0(vararg args: Operand) = set_b_r(0, Reg8.B)
@@ -1274,8 +1368,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_c3(vararg args: Operand) = set_b_r(0, Reg8.E)
     fun set_c4(vararg args: Operand) = set_b_r(0, Reg8.H)
     fun set_c5(vararg args: Operand) = set_b_r(0, Reg8.L)
-    fun set_c6(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(0, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_c6(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(0, value).toUnsignedInt())
+    }
 
     fun set_cf(vararg args: Operand) = set_b_r(1, Reg8.A)
     fun set_c8(vararg args: Operand) = set_b_r(1, Reg8.B)
@@ -1284,8 +1383,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_cb(vararg args: Operand) = set_b_r(1, Reg8.E)
     fun set_cc(vararg args: Operand) = set_b_r(1, Reg8.H)
     fun set_cd(vararg args: Operand) = set_b_r(1, Reg8.L)
-    fun set_ce(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(1, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_ce(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(1, value).toUnsignedInt())
+    }
 
     fun set_d7(vararg args: Operand) = set_b_r(2, Reg8.A)
     fun set_d0(vararg args: Operand) = set_b_r(2, Reg8.B)
@@ -1294,8 +1398,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_d3(vararg args: Operand) = set_b_r(2, Reg8.E)
     fun set_d4(vararg args: Operand) = set_b_r(2, Reg8.H)
     fun set_d5(vararg args: Operand) = set_b_r(2, Reg8.L)
-    fun set_d6(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(2, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_d6(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(2, value).toUnsignedInt())
+    }
 
     fun set_df(vararg args: Operand) = set_b_r(3, Reg8.A)
     fun set_d8(vararg args: Operand) = set_b_r(3, Reg8.B)
@@ -1304,8 +1413,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_db(vararg args: Operand) = set_b_r(3, Reg8.E)
     fun set_dc(vararg args: Operand) = set_b_r(3, Reg8.H)
     fun set_dd(vararg args: Operand) = set_b_r(3, Reg8.L)
-    fun set_de(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(3, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_de(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(3, value).toUnsignedInt())
+    }
 
     fun set_e7(vararg args: Operand) = set_b_r(4, Reg8.A)
     fun set_e0(vararg args: Operand) = set_b_r(4, Reg8.B)
@@ -1314,8 +1428,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_e3(vararg args: Operand) = set_b_r(4, Reg8.E)
     fun set_e4(vararg args: Operand) = set_b_r(4, Reg8.H)
     fun set_e5(vararg args: Operand) = set_b_r(4, Reg8.L)
-    fun set_e6(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(4, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_e6(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(4, value).toUnsignedInt())
+    }
 
     fun set_ef(vararg args: Operand) = set_b_r(5, Reg8.A)
     fun set_e8(vararg args: Operand) = set_b_r(5, Reg8.B)
@@ -1324,8 +1443,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_eb(vararg args: Operand) = set_b_r(5, Reg8.E)
     fun set_ec(vararg args: Operand) = set_b_r(5, Reg8.H)
     fun set_ed(vararg args: Operand) = set_b_r(5, Reg8.L)
-    fun set_ee(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(5, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_ee(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(5, value).toUnsignedInt())
+    }
 
     fun set_f7(vararg args: Operand) = set_b_r(6, Reg8.A)
     fun set_f0(vararg args: Operand) = set_b_r(6, Reg8.B)
@@ -1334,8 +1458,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_f3(vararg args: Operand) = set_b_r(6, Reg8.E)
     fun set_f4(vararg args: Operand) = set_b_r(6, Reg8.H)
     fun set_f5(vararg args: Operand) = set_b_r(6, Reg8.L)
-    fun set_f6(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(6, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_f6(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(6, value).toUnsignedInt())
+    }
 
     fun set_ff(vararg args: Operand) = set_b_r(7, Reg8.A)
     fun set_f8(vararg args: Operand) = set_b_r(7, Reg8.B)
@@ -1344,8 +1473,13 @@ class Cpu(private val gb: GameBoy) {
     fun set_fb(vararg args: Operand) = set_b_r(7, Reg8.E)
     fun set_fc(vararg args: Operand) = set_b_r(7, Reg8.H)
     fun set_fd(vararg args: Operand) = set_b_r(7, Reg8.L)
-    fun set_fe(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), set_b_r(7, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun set_fe(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, set_b_r(7, value).toUnsignedInt())
+    }
 
     fun res_87(vararg args: Operand) = res_b_r(0, Reg8.A)
     fun res_80(vararg args: Operand) = res_b_r(0, Reg8.B)
@@ -1354,8 +1488,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_83(vararg args: Operand) = res_b_r(0, Reg8.E)
     fun res_84(vararg args: Operand) = res_b_r(0, Reg8.H)
     fun res_85(vararg args: Operand) = res_b_r(0, Reg8.L)
-    fun res_86(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(0, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_86(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(0, value).toUnsignedInt())
+    }
 
     fun res_8f(vararg args: Operand) = res_b_r(1, Reg8.A)
     fun res_88(vararg args: Operand) = res_b_r(1, Reg8.B)
@@ -1364,8 +1503,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_8b(vararg args: Operand) = res_b_r(1, Reg8.E)
     fun res_8c(vararg args: Operand) = res_b_r(1, Reg8.H)
     fun res_8d(vararg args: Operand) = res_b_r(1, Reg8.L)
-    fun res_8e(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(1, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_8e(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(1, value).toUnsignedInt())
+    }
 
     fun res_97(vararg args: Operand) = res_b_r(2, Reg8.A)
     fun res_90(vararg args: Operand) = res_b_r(2, Reg8.B)
@@ -1374,8 +1518,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_93(vararg args: Operand) = res_b_r(2, Reg8.E)
     fun res_94(vararg args: Operand) = res_b_r(2, Reg8.H)
     fun res_95(vararg args: Operand) = res_b_r(2, Reg8.L)
-    fun res_96(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(2, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_96(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(2, value).toUnsignedInt())
+    }
 
     fun res_9f(vararg args: Operand) = res_b_r(3, Reg8.A)
     fun res_98(vararg args: Operand) = res_b_r(3, Reg8.B)
@@ -1384,8 +1533,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_9b(vararg args: Operand) = res_b_r(3, Reg8.E)
     fun res_9c(vararg args: Operand) = res_b_r(3, Reg8.H)
     fun res_9d(vararg args: Operand) = res_b_r(3, Reg8.L)
-    fun res_9e(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(3, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_9e(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(3, value).toUnsignedInt())
+    }
 
     fun res_a7(vararg args: Operand) = res_b_r(4, Reg8.A)
     fun res_a0(vararg args: Operand) = res_b_r(4, Reg8.B)
@@ -1394,8 +1548,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_a3(vararg args: Operand) = res_b_r(4, Reg8.E)
     fun res_a4(vararg args: Operand) = res_b_r(4, Reg8.H)
     fun res_a5(vararg args: Operand) = res_b_r(4, Reg8.L)
-    fun res_a6(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(4, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_a6(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(4, value).toUnsignedInt())
+    }
 
     fun res_af(vararg args: Operand) = res_b_r(5, Reg8.A)
     fun res_a8(vararg args: Operand) = res_b_r(5, Reg8.B)
@@ -1404,8 +1563,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_ab(vararg args: Operand) = res_b_r(5, Reg8.E)
     fun res_ac(vararg args: Operand) = res_b_r(5, Reg8.H)
     fun res_ad(vararg args: Operand) = res_b_r(5, Reg8.L)
-    fun res_ae(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(5, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_ae(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(5, value).toUnsignedInt())
+    }
 
     fun res_b7(vararg args: Operand) = res_b_r(6, Reg8.A)
     fun res_b0(vararg args: Operand) = res_b_r(6, Reg8.B)
@@ -1414,8 +1578,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_b3(vararg args: Operand) = res_b_r(6, Reg8.E)
     fun res_b4(vararg args: Operand) = res_b_r(6, Reg8.H)
     fun res_b5(vararg args: Operand) = res_b_r(6, Reg8.L)
-    fun res_b6(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(6, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_b6(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(6, value).toUnsignedInt())
+    }
 
     fun res_bf(vararg args: Operand) = res_b_r(7, Reg8.A)
     fun res_b8(vararg args: Operand) = res_b_r(7, Reg8.B)
@@ -1424,8 +1593,13 @@ class Cpu(private val gb: GameBoy) {
     fun res_bb(vararg args: Operand) = res_b_r(7, Reg8.E)
     fun res_bc(vararg args: Operand) = res_b_r(7, Reg8.H)
     fun res_bd(vararg args: Operand) = res_b_r(7, Reg8.L)
-    fun res_be(vararg args: Operand) =
-        mmu.set(read(Reg16.HL), res_b_r(7, mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
+    fun res_be(vararg args: Operand) {
+        gb.io.tick(4)
+        val addr = read(Reg16.HL)
+        val value = mmu.get(addr).toByte()
+        gb.io.tick(4)
+        mmu.set(addr, res_b_r(7, value).toUnsignedInt())
+    }
 
     fun jp_c3(vararg args: Operand) = jp_n(args[0].get())
 
