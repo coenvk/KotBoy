@@ -2,6 +2,7 @@ package com.arman.kotboy.io
 
 import com.arman.kotboy.GameBoy
 import com.arman.kotboy.cpu.util.at
+import com.arman.kotboy.cpu.util.contentToHexString
 import com.arman.kotboy.cpu.util.toInt
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.gpu.Gpu
@@ -140,7 +141,7 @@ class Lcd(private val gb: GameBoy) :
             IoReg.DMA.address -> {
                 val src = value shl 8
                 for (i in 0xFE00..0xFE9F) {
-                    oam[i] = this.gb.cpu.mmu[src + i - 0xFE00].toUnsignedInt()
+                    oam[i] = this.gb.mmu[src + i - 0xFE00].toUnsignedInt()
                 }
                 super.set(address, value)
             }
@@ -247,46 +248,51 @@ class Lcd(private val gb: GameBoy) :
         return (vram[address].toUnsignedInt() shl 8) or (vram[address + 1].toUnsignedInt())
     }
 
+    private fun renderLn() {
+        if (!isLcdEnabled()) return
+        if (this.ly < 0 || this.ly >= Display.WIDTH) return
+
+        drawBackground()
+        drawWindow()
+        drawSprites()
+    }
+
     private fun renderLine() {
-        var bgRow = 0
+        var tileData = 0
         val bgy = (this.ly + this.scy).toUnsignedInt()
         val winy = (this.ly - this.wy).toUnsignedInt()
 
         for (px in 0 until Display.WIDTH) {
             var color = GrayPalette[0]
-            var bgIdx = 0
+            var pi = 0
             var bgx = 0
             var y = 0
-            var ofs = 0
-            var bgVisible: Boolean
+            var bgVisible = false
+            var mapAddr = 0
 
             if (isWindowDisplayEnabled() && this.ly.toUnsignedInt() >= wy.toUnsignedInt() && px >= (wx - 0x07).toUnsignedInt()) {
                 bgx = (px - wx + 0x07).toUnsignedInt()
                 y = winy
-                ofs = getWindowTileTableAddr()
                 bgVisible = true
+                mapAddr = getWindowTileTableAddr() + ((winy / 0x08) * 0x20)
             } else if (isBgEnabled()) {
                 bgx = (px + scx).toUnsignedInt()
                 y = bgy
-                ofs = getBgTileTableAddr()
                 bgVisible = true
-            } else {
-                color = GrayPalette[0]
-                bgIdx = 0
-                bgVisible = false
+                mapAddr = getBgTileTableAddr() + ((bgy / 0x08) * 0x20)
             }
 
             if (bgVisible) {
                 val tx = bgx.rem(0x08)
                 if (px == 0 || tx == 0) {
-                    var tileId = vram[ofs + (bgx / 0x08) + (y / 0x08 * 0x20)].toUnsignedInt()
+                    var tileId = vram[mapAddr + bgx / 0x08].toUnsignedInt()
                     if (getTilePatternTableAddr() == Gpu.TILE_PATTERN_TABLE_0) {
                         tileId = tileId.toByte() + 128
                     }
-                    bgRow = getBitmapSliver(tileId, y.rem(0x08), getTilePatternTableAddr())
+                    tileData = getTileData(tileId, y.rem(0x08), getTilePatternTableAddr())
                 }
-                bgIdx = ((bgRow ushr (15 - tx)) and 1) or (((bgRow ushr (7 - tx)) shl 1) and 2)
-                color = GrayPalette[(this.bgp ushr (bgIdx * 2)) and 3]
+                pi = ((tileData ushr (15 - tx)) and 1) or (((tileData ushr (7 - tx)) shl 1) and 2)
+                color = GrayPalette[(this.bgp ushr (pi * 2)) and 3]
             }
 
             if (isSpriteDisplayEnabled()) {
@@ -295,9 +301,9 @@ class Lcd(private val gb: GameBoy) :
                         if (px >= it.x && px < it.x + 8) {
                             var x = px - it.x
                             if (it.xflip) x = 7 - x
-                            val pi = ((it.y ushr (15 - x)) and 1) or (((it.y ushr (7 - x)) shl 1) and 2)
-                            if (pi != 0 && (bgIdx == 0 || it.hasPriority)) {
-                                color = GrayPalette[(it.palette ushr (pi * 2)) and 3]
+                            val spi = ((it.y ushr (15 - x)) and 1) or (((it.y ushr (7 - x)) shl 1) and 2)
+                            if (spi != 0 && (pi == 0 || it.hasPriority)) {
+                                color = GrayPalette[(it.palette ushr (spi * 2)) and 3]
                                 return@loop
                             }
                         }
@@ -306,6 +312,73 @@ class Lcd(private val gb: GameBoy) :
             }
 
             buffer[this.ly.toUnsignedInt() * Display.WIDTH + px] = color
+        }
+    }
+
+    private fun getTileData(tileId: Int, line: Int, tileDataAddr: Int): Int {
+        val tileAddr = tileId * 0x10 + tileDataAddr
+        val addr = tileAddr + line * 2
+        return (vram[addr].toUnsignedInt() shl 8) or (vram[addr + 1].toUnsignedInt())
+    }
+
+    private fun drawSprites() {
+        if (isSpriteDisplayEnabled()) {
+            for (px in 0 until Display.WIDTH) {
+                this.sprites.forEach loop@{ that ->
+                    that?.let {
+                        if (px >= it.x && px < it.x + 8) {
+                            var x = px - it.x
+                            if (it.xflip) x = 7 - x
+                            val pi = ((it.y ushr (15 - x)) and 1) or (((it.y ushr (7 - x)) shl 1) and 2)
+                            if (pi != 0 && it.hasPriority) {
+                                val color = GrayPalette[(it.palette ushr (pi * 2)) and 3]
+                                buffer[this.ly.toUnsignedInt() * Display.WIDTH + px] = color
+                                return@loop
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun drawWindow() {
+        if (isWindowDisplayEnabled()) {
+            for (px in 0 until Display.WIDTH) {
+                if (this.ly.toUnsignedInt() >= wy.toUnsignedInt() && px >= (wx - 0x07).toUnsignedInt()) {
+
+                }
+            }
+        }
+    }
+
+    private fun drawBackground() {
+        if (isBgEnabled()) {
+            val y = (this.ly + this.scy.rem(0x08)) / 0x08
+            val offset = getBgTileTableAddr()
+            for (x in 0..20) {
+                val addr = offset + ((y + scy / 0x08).rem(0x20) * 0x20) + ((x + scx / 0x08).rem(0x20))
+                var tileId = vram[addr].toUnsignedInt()
+                if (getTilePatternTableAddr() == Gpu.TILE_PATTERN_TABLE_0) tileId = tileId.toByte() + 128
+                drawTile(-(scx.rem(0x08)) + x * 0x08, -(scy.rem(0x08)) + y * 0x08, tileId, offset)
+            }
+        }
+    }
+
+    private fun drawTile(x: Int, y: Int, tileId: Int, offset: Int) {
+        val line = this.ly - y
+        val address = tileId * 0x10 + 2 * line + offset
+
+        for (px in 0 until 0x08) {
+            val dx = x + px
+
+            if (dx < 0 || dx >= Display.WIDTH) continue
+
+            val index = dx + this.ly.toUnsignedInt() * Display.WIDTH
+            val pi =
+                (((vram[address + 1] and (0x80 shr px)) shr (7 - px)) shl 1) or ((vram[address] and (0x80 shr px)) shr (7 - px))
+            val color = GrayPalette[(this.bgp ushr (pi * 2)) and 3]
+            buffer[index] = color
         }
     }
 

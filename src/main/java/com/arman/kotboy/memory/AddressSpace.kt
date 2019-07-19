@@ -1,5 +1,9 @@
 package com.arman.kotboy.memory
 
+import com.arman.kotboy.cpu.util.hexString
+import java.io.InputStream
+import java.io.OutputStream
+
 abstract class AddressSpace(protected val startAddress: Int, protected val values: IntArray) : Memory {
 
     var enabled: Boolean = true
@@ -39,20 +43,31 @@ abstract class AddressSpace(protected val startAddress: Int, protected val value
         } else 0xFF
     }
 
-    open fun get(startAddress: Int, endAddress: Int): IntArray? {
+    fun get(startAddress: Int, endAddress: Int): IntArray? {
         return if (accepts(startAddress) && accepts(endAddress)) {
-            this.values.sliceArray(startAddress..endAddress)
+            val sa = startAddress - this.startAddress
+            val ea = endAddress - this.startAddress
+            this.values.sliceArray(sa..ea)
         } else null
+    }
+
+    fun toBytes(): ByteArray {
+        val buffer = ByteArray(values.size)
+        for (i in 0 until buffer.size) {
+            buffer[i] = values[i].toByte()
+        }
+        return buffer
     }
 
     override fun toString(): String {
         var res = ""
         for (i in this.startAddress..this.endAddress step 16) {
-            for (j in 0 until 15) {
+            res += "${i.hexString(4)}\t"
+            for (j in 0 until 16) {
                 if (i + j >= this.size() + this.startAddress) return res
-                res += "${(i + j)} = ${this[i + j]} | "
+                res += "${this[i + j].hexString(2)} "
             }
-            res += "${(i + 15)} = ${this[i + 15]}\n"
+            res += "\n"
         }
         return res
     }

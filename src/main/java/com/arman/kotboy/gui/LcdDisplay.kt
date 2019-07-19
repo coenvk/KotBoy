@@ -1,11 +1,8 @@
 package com.arman.kotboy.gui
 
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.GraphicsEnvironment
+import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.JPanel
-
 
 class LcdDisplay : Display, JPanel() {
 
@@ -14,6 +11,14 @@ class LcdDisplay : Display, JPanel() {
     init {
         val gc = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration
         this.img = gc.createCompatibleImage(Display.WIDTH, Display.HEIGHT)
+
+        val size = Dimension(Display.WIDTH * Display.SCALE, Display.HEIGHT * Display.SCALE)
+        this.size = size
+        this.preferredSize = size
+
+        val g = this.img.createGraphics()
+        g.background = Color.WHITE
+        g.clearRect(0, 0, this.img.width, this.img.height)
     }
 
     override fun frameReady(buffer: IntArray) {

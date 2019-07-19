@@ -18,15 +18,20 @@ class Mbc2(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
     }
 
     override fun write(address: Int, value: Int): Boolean {
-        if (address in 0x0..0x1fff) {
-            if ((address and 0x100) == 0) {
-                this.ramEnabled = (value and 0x0A) == 0x0A
+        when (address) {
+            in 0x0..0x1fff -> if ((address and 0x100) == 0) {
+                this.ram?.let {
+                    it.enabled = (value and 0x0A) == 0x0A
+                    if (!it.enabled) {
+                        save()
+                    }
+                }
             }
-        } else if (address in 0x2000..0x3fff) {
-            if (address and 0x100 != 0) {
+            in 0x2000..0x3fff -> if (address and 0x100 != 0) {
                 romBank = if (value == 0) 1 else value and 0xF
             }
-        } else return false
+            else -> return false
+        }
         return true
     }
 

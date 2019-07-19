@@ -2,10 +2,12 @@ package com.arman.kotboy.memory.cartridge
 
 import com.arman.kotboy.Options
 import com.arman.kotboy.RomReader
-import com.arman.kotboy.cpu.util.hexString
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.memory.*
 import com.arman.kotboy.memory.cartridge.mbc.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class Cartridge(vararg values: Int, private var bootstrap: Boolean = false) : Memory {
 
@@ -81,11 +83,11 @@ class Cartridge(vararg values: Int, private var bootstrap: Boolean = false) : Me
     }
 
     override fun get(address: Int): Int {
-        return if (bootstrap && colorMode != ColorMode.CGB && (address in 0x0 until 0x100)) {
+        return if (bootstrap && !isCgb() && (address in 0x0 until 0x100)) {
             BootRom.DMG[address]
-        } else if (bootstrap && colorMode == ColorMode.CGB && (address in 0x0 until 0x100)) {
+        } else if (bootstrap && isCgb() && (address in 0x0 until 0x100)) {
             BootRom.CGB[address]
-        } else if (bootstrap && colorMode == ColorMode.CGB && (address in 0x200 until 0x900)) {
+        } else if (bootstrap && isCgb() && (address in 0x200 until 0x900)) {
             BootRom.CGB[address - 0x100]
         } else {
             return mbc[address]
@@ -100,4 +102,11 @@ class Cartridge(vararg values: Int, private var bootstrap: Boolean = false) : Me
     override fun range(): IntRange = this.mbc.range()
     override fun reset() = this.mbc.reset()
     override fun clear() = this.mbc.clear()
+
+    fun isCgb(): Boolean {
+        return this.colorMode == ColorMode.CGB
+    }
+
+    override fun toString(): String = this.mbc.toString()
+
 }

@@ -7,7 +7,6 @@ import com.arman.kotboy.io.Interrupt
 import com.arman.kotboy.io.IoReg
 import com.arman.kotboy.memory.Mmu
 import kotlin.experimental.inv
-import kotlin.system.exitProcess
 
 @Suppress("FunctionName", "LocalVariableName", "PropertyName")
 class Cpu(private val gb: GameBoy) {
@@ -75,44 +74,34 @@ class Cpu(private val gb: GameBoy) {
     }
 
     fun read(reg: Reg16): Int {
-        val r1 = read(reg.r1)
-        val r2 = read(reg.r2)
+        val r1 = read(reg.r1).toUnsignedInt()
+        val r2 = read(reg.r2).toUnsignedInt()
         return ((r1 shl 8) or r2)
     }
 
-    fun write(reg: Reg8, arg: Operand) {
-        write(reg, arg.get())
-    }
-
     fun write(reg: Reg8, arg: Byte) {
-        var value = arg.toUnsignedInt()
+        var value = arg
         if (reg == Reg8.F) {
-            value = value and 0xF0
+            value = (arg.toUnsignedInt() and 0xF0).toByte()
         }
-        regs[reg.ordinal] = value.toByte()
+        regs[reg.ordinal] = value
     }
 
     fun write(reg: Reg8, arg: Int) {
-        write(reg, arg.toByte())
-    }
-
-    fun write(reg1: Reg8, reg2: Reg8) {
-        write(reg1, read(reg2).toUnsignedInt())
-    }
-
-    fun write(reg: Reg16, arg: Operand) {
-        write(reg, arg.get())
+        var value = arg.toUnsignedInt()
+        if (reg == Reg8.F) value = arg.toUnsignedInt() and 0xF0
+        regs[reg.ordinal] = value.toByte()
     }
 
     fun write(reg: Reg16, arg: Int) {
-        write(reg.r1, arg.msb().toUnsignedInt())
-        write(reg.r2, arg.lsb().toUnsignedInt())
+        write(reg.r1, arg.msb().toByte())
+        write(reg.r2, arg.lsb().toByte())
     }
 
     fun setFlag(flag: Flag, set: Boolean = true) {
         var f = read(Reg8.F).toUnsignedInt()
         f = if (set) (f set flag) else (f reset flag)
-        write(Reg8.F, f)
+        write(Reg8.F, f.toByte())
     }
 
     fun hasFlag(flag: Flag): Boolean {
@@ -131,7 +120,7 @@ class Cpu(private val gb: GameBoy) {
             return OpCode.HALT_76.cycles
         }
 
-        val line = PC.hexString()
+        val line = PC.hexString(4)
 
         var opcode = this.mmu[PC++]
 
@@ -220,10 +209,12 @@ class Cpu(private val gb: GameBoy) {
 
     fun swap_n(reg: Reg8) {
         val arg = read(reg)
-        write(reg, swap_n(arg.toUnsignedInt()))
+        write(reg, swap_n(arg))
     }
 
-    fun swap_n(arg: Int): Int {
+    fun swap_n(arg: Byte) = swap_n(arg.toUnsignedInt())
+
+    fun swap_n(arg: Int): Byte {
         val upper = arg and 0xF0
         val lower = arg and 0x0F
         val res = (lower shl 4) or (upper shr 4)
@@ -231,10 +222,8 @@ class Cpu(private val gb: GameBoy) {
         setFlag(Flag.N, false)
         setFlag(Flag.H, false)
         setFlag(Flag.C, false)
-        return res
+        return res.toByte()
     }
-
-    fun swap_n(arg: Operand): Int = swap_n(arg.get())
 
     fun daa() {
         val A = read(Reg8.A)
@@ -258,7 +247,7 @@ class Cpu(private val gb: GameBoy) {
 
         setFlag(Flag.H, false)
         setFlag(Flag.Z, res.toUnsignedInt() == 0)
-        write(Reg8.A, res)
+        write(Reg8.A, res.toByte())
     }
 
     fun cpl() {
@@ -453,14 +442,6 @@ class Cpu(private val gb: GameBoy) {
         PC = arg
     }
 
-    fun jp_n(arg: Operand) {
-        jp_n(arg.get())
-    }
-
-    fun jp_c_n(arg1: Condition, arg2: Operand): Boolean {
-        return jp_c_n(arg1, arg2.get())
-    }
-
     fun jp_c_n(arg1: Condition, arg2: Int): Boolean {
         when (arg1) {
             Condition.NZ -> if (!hasFlag(Flag.Z)) {
@@ -485,14 +466,6 @@ class Cpu(private val gb: GameBoy) {
 
     fun jr_n(arg: Byte) {
         PC += arg
-    }
-
-    fun jr_n(arg: Operand) {
-        jr_n(arg.get().toByte())
-    }
-
-    fun jr_c_n(arg1: Condition, arg2: Operand): Boolean {
-        return jr_c_n(arg1, arg2.get().toByte())
     }
 
     fun jr_c_n(arg1: Condition, arg2: Byte): Boolean {
@@ -608,7 +581,7 @@ class Cpu(private val gb: GameBoy) {
             setFlag(Flag.N, false)
             setFlag(Flag.H, true)
             setFlag(Flag.C, false)
-            write(Reg8.A, res)
+            write(Reg8.A, res.toByte())
         }
 
         fun or(reg: Reg8) = or(read(reg).toUnsignedInt())
@@ -622,7 +595,7 @@ class Cpu(private val gb: GameBoy) {
             setFlag(Flag.N, false)
             setFlag(Flag.H, false)
             setFlag(Flag.C, false)
-            write(Reg8.A, res)
+            write(Reg8.A, res.toByte())
         }
 
         fun xor(reg: Reg8) = xor(read(reg).toUnsignedInt())
@@ -636,12 +609,12 @@ class Cpu(private val gb: GameBoy) {
             setFlag(Flag.N, false)
             setFlag(Flag.H, false)
             setFlag(Flag.C, false)
-            write(Reg8.A, res)
+            write(Reg8.A, res.toByte())
         }
 
         fun inc_n(reg: Reg8) {
             val arg = read(reg)
-            write(reg, inc_n(arg.toUnsignedInt()))
+            write(reg, inc_n(arg.toUnsignedInt()).toByte())
         }
 
         fun inc_n(reg: Reg16) {
@@ -660,7 +633,7 @@ class Cpu(private val gb: GameBoy) {
 
         fun dec_n(reg: Reg8) {
             val arg = read(reg)
-            write(reg, dec_n(arg.toUnsignedInt()))
+            write(reg, dec_n(arg.toUnsignedInt()).toByte())
         }
 
         fun dec_n(reg: Reg16) {
@@ -690,7 +663,7 @@ class Cpu(private val gb: GameBoy) {
             setFlag(Flag.N, false)
             setFlag(Flag.H, ((A and 0x0F) + (arg and 0x0F)) > 0x0F)
             setFlag(Flag.C, ((A and 0xFF) + (arg and 0xFF)) > 0xFF)
-            write(Reg8.A, res)
+            write(Reg8.A, res.toByte())
         }
 
         fun adc_A_n(reg: Reg8) = adc_A_n(read(reg).toUnsignedInt())
@@ -707,7 +680,7 @@ class Cpu(private val gb: GameBoy) {
             setFlag(Flag.N, false)
             setFlag(Flag.H, ((A and 0x0F) + (arg and 0x0F) + carry) > 0x0F)
             setFlag(Flag.C, ((A and 0xFF) + (arg and 0xFF) + carry) > 0xFF)
-            write(Reg8.A, res)
+            write(Reg8.A, res.toByte())
         }
 
         fun sub_n(reg: Reg8) = sub_n(read(reg).toUnsignedInt())
@@ -717,7 +690,7 @@ class Cpu(private val gb: GameBoy) {
         }
 
         fun sub_n(arg: Int) {
-            write(Reg8.A, cp_n(arg))
+            write(Reg8.A, cp_n(arg).toByte())
         }
 
         fun sbc_A_n(reg: Reg8) = sbc_A_n(read(reg).toUnsignedInt())
@@ -734,7 +707,7 @@ class Cpu(private val gb: GameBoy) {
             setFlag(Flag.N, true)
             setFlag(Flag.H, ((A and 0x0F) < ((arg and 0x0F) + carry)))
             setFlag(Flag.C, ((A and 0xFF) < ((arg and 0xFF) + carry)))
-            return write(Reg8.A, res)
+            return write(Reg8.A, res.toByte())
         }
 
         fun cp_n(reg: Reg8): Int = cp_n(read(reg).toUnsignedInt())
@@ -774,407 +747,403 @@ class Cpu(private val gb: GameBoy) {
     }
 
     // opcode functions
-    fun nop_00(vararg args: Operand) = nop()
+    fun nop_00(vararg args: Int) = nop()
 
-    fun prefix_cb(vararg args: Operand) = Unit
+    fun prefix_cb(vararg args: Int) = Unit
 
-    fun ld_06(vararg args: Operand) = write(Reg8.B, args[0])
-    fun ld_0e(vararg args: Operand) = write(Reg8.C, args[0])
-    fun ld_16(vararg args: Operand) = write(Reg8.D, args[0])
-    fun ld_1e(vararg args: Operand) = write(Reg8.E, args[0])
-    fun ld_26(vararg args: Operand) = write(Reg8.H, args[0])
-    fun ld_2e(vararg args: Operand) = write(Reg8.L, args[0])
+    fun ld_06(vararg args: Int) = write(Reg8.B, args[0])
+    fun ld_0e(vararg args: Int) = write(Reg8.C, args[0])
+    fun ld_16(vararg args: Int) = write(Reg8.D, args[0])
+    fun ld_1e(vararg args: Int) = write(Reg8.E, args[0])
+    fun ld_26(vararg args: Int) = write(Reg8.H, args[0])
+    fun ld_2e(vararg args: Int) = write(Reg8.L, args[0])
 
-    fun ld_40(vararg args: Operand) = write(Reg8.B, Reg8.B)
-    fun ld_41(vararg args: Operand) = write(Reg8.B, Reg8.C)
-    fun ld_42(vararg args: Operand) = write(Reg8.B, Reg8.D)
-    fun ld_43(vararg args: Operand) = write(Reg8.B, Reg8.E)
-    fun ld_44(vararg args: Operand) = write(Reg8.B, Reg8.H)
-    fun ld_45(vararg args: Operand) = write(Reg8.B, Reg8.L)
-    fun ld_46(vararg args: Operand) =
+    fun ld_40(vararg args: Int) = write(Reg8.B, read(Reg8.B))
+    fun ld_41(vararg args: Int) = write(Reg8.B, read(Reg8.C))
+    fun ld_42(vararg args: Int) = write(Reg8.B, read(Reg8.D))
+    fun ld_43(vararg args: Int) = write(Reg8.B, read(Reg8.E))
+    fun ld_44(vararg args: Int) = write(Reg8.B, read(Reg8.H))
+    fun ld_45(vararg args: Int) = write(Reg8.B, read(Reg8.L))
+    fun ld_46(vararg args: Int) =
         write(Reg8.B, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_48(vararg args: Operand) = write(Reg8.C, Reg8.B)
-    fun ld_49(vararg args: Operand) = write(Reg8.C, Reg8.C)
-    fun ld_4a(vararg args: Operand) = write(Reg8.C, Reg8.D)
-    fun ld_4b(vararg args: Operand) = write(Reg8.C, Reg8.E)
-    fun ld_4c(vararg args: Operand) = write(Reg8.C, Reg8.H)
-    fun ld_4d(vararg args: Operand) = write(Reg8.C, Reg8.L)
-    fun ld_4e(vararg args: Operand) =
+    fun ld_48(vararg args: Int) = write(Reg8.C, read(Reg8.B))
+    fun ld_49(vararg args: Int) = write(Reg8.C, read(Reg8.C))
+    fun ld_4a(vararg args: Int) = write(Reg8.C, read(Reg8.D))
+    fun ld_4b(vararg args: Int) = write(Reg8.C, read(Reg8.E))
+    fun ld_4c(vararg args: Int) = write(Reg8.C, read(Reg8.H))
+    fun ld_4d(vararg args: Int) = write(Reg8.C, read(Reg8.L))
+    fun ld_4e(vararg args: Int) =
         write(Reg8.C, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_50(vararg args: Operand) = write(Reg8.D, Reg8.B)
-    fun ld_51(vararg args: Operand) = write(Reg8.D, Reg8.C)
-    fun ld_52(vararg args: Operand) = write(Reg8.D, Reg8.D)
-    fun ld_53(vararg args: Operand) = write(Reg8.D, Reg8.E)
-    fun ld_54(vararg args: Operand) = write(Reg8.D, Reg8.H)
-    fun ld_55(vararg args: Operand) = write(Reg8.D, Reg8.L)
-    fun ld_56(vararg args: Operand) =
+    fun ld_50(vararg args: Int) = write(Reg8.D, read(Reg8.B))
+    fun ld_51(vararg args: Int) = write(Reg8.D, read(Reg8.C))
+    fun ld_52(vararg args: Int) = write(Reg8.D, read(Reg8.D))
+    fun ld_53(vararg args: Int) = write(Reg8.D, read(Reg8.E))
+    fun ld_54(vararg args: Int) = write(Reg8.D, read(Reg8.H))
+    fun ld_55(vararg args: Int) = write(Reg8.D, read(Reg8.L))
+    fun ld_56(vararg args: Int) =
         write(Reg8.D, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_58(vararg args: Operand) = write(Reg8.E, Reg8.B)
-    fun ld_59(vararg args: Operand) = write(Reg8.E, Reg8.C)
-    fun ld_5a(vararg args: Operand) = write(Reg8.E, Reg8.D)
-    fun ld_5b(vararg args: Operand) = write(Reg8.E, Reg8.E)
-    fun ld_5c(vararg args: Operand) = write(Reg8.E, Reg8.H)
-    fun ld_5d(vararg args: Operand) = write(Reg8.E, Reg8.L)
-    fun ld_5e(vararg args: Operand) =
+    fun ld_58(vararg args: Int) = write(Reg8.E, read(Reg8.B))
+    fun ld_59(vararg args: Int) = write(Reg8.E, read(Reg8.C))
+    fun ld_5a(vararg args: Int) = write(Reg8.E, read(Reg8.D))
+    fun ld_5b(vararg args: Int) = write(Reg8.E, read(Reg8.E))
+    fun ld_5c(vararg args: Int) = write(Reg8.E, read(Reg8.H))
+    fun ld_5d(vararg args: Int) = write(Reg8.E, read(Reg8.L))
+    fun ld_5e(vararg args: Int) =
         write(Reg8.E, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_60(vararg args: Operand) = write(Reg8.H, Reg8.B)
-    fun ld_61(vararg args: Operand) = write(Reg8.H, Reg8.C)
-    fun ld_62(vararg args: Operand) = write(Reg8.H, Reg8.D)
-    fun ld_63(vararg args: Operand) = write(Reg8.H, Reg8.E)
-    fun ld_64(vararg args: Operand) = write(Reg8.H, Reg8.H)
-    fun ld_65(vararg args: Operand) = write(Reg8.H, Reg8.L)
-    fun ld_66(vararg args: Operand) =
+    fun ld_60(vararg args: Int) = write(Reg8.H, read(Reg8.B))
+    fun ld_61(vararg args: Int) = write(Reg8.H, read(Reg8.C))
+    fun ld_62(vararg args: Int) = write(Reg8.H, read(Reg8.D))
+    fun ld_63(vararg args: Int) = write(Reg8.H, read(Reg8.E))
+    fun ld_64(vararg args: Int) = write(Reg8.H, read(Reg8.H))
+    fun ld_65(vararg args: Int) = write(Reg8.H, read(Reg8.L))
+    fun ld_66(vararg args: Int) =
         write(Reg8.H, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_68(vararg args: Operand) = write(Reg8.L, Reg8.B)
-    fun ld_69(vararg args: Operand) = write(Reg8.L, Reg8.C)
-    fun ld_6a(vararg args: Operand) = write(Reg8.L, Reg8.D)
-    fun ld_6b(vararg args: Operand) = write(Reg8.L, Reg8.E)
-    fun ld_6c(vararg args: Operand) = write(Reg8.L, Reg8.H)
-    fun ld_6d(vararg args: Operand) = write(Reg8.L, Reg8.L)
-    fun ld_6e(vararg args: Operand) =
+    fun ld_68(vararg args: Int) = write(Reg8.L, read(Reg8.B))
+    fun ld_69(vararg args: Int) = write(Reg8.L, read(Reg8.C))
+    fun ld_6a(vararg args: Int) = write(Reg8.L, read(Reg8.D))
+    fun ld_6b(vararg args: Int) = write(Reg8.L, read(Reg8.E))
+    fun ld_6c(vararg args: Int) = write(Reg8.L, read(Reg8.H))
+    fun ld_6d(vararg args: Int) = write(Reg8.L, read(Reg8.L))
+    fun ld_6e(vararg args: Int) =
         write(Reg8.L, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_70(vararg args: Operand) =
+    fun ld_70(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.B).toUnsignedInt())
 
-    fun ld_71(vararg args: Operand) =
+    fun ld_71(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.C).toUnsignedInt())
 
-    fun ld_72(vararg args: Operand) =
+    fun ld_72(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.D).toUnsignedInt())
 
-    fun ld_73(vararg args: Operand) =
+    fun ld_73(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.E).toUnsignedInt())
 
-    fun ld_74(vararg args: Operand) =
+    fun ld_74(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.H).toUnsignedInt())
 
-    fun ld_75(vararg args: Operand) =
+    fun ld_75(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.L).toUnsignedInt())
 
-    fun ld_36(vararg args: Operand) {
-        val addr = args[0].get()
+    fun ld_36(vararg args: Int) {
+        val addr = args[0]
         gb.io.tick(4)
         mmu.set(read(Reg16.HL), addr)
     }
 
-    fun ld_7f(vararg args: Operand) = write(Reg8.A, Reg8.A)
-    fun ld_78(vararg args: Operand) = write(Reg8.A, Reg8.B)
-    fun ld_79(vararg args: Operand) = write(Reg8.A, Reg8.C)
-    fun ld_7a(vararg args: Operand) = write(Reg8.A, Reg8.D)
-    fun ld_7b(vararg args: Operand) = write(Reg8.A, Reg8.E)
-    fun ld_7c(vararg args: Operand) = write(Reg8.A, Reg8.H)
-    fun ld_7d(vararg args: Operand) = write(Reg8.A, Reg8.L)
+    fun ld_7f(vararg args: Int) = write(Reg8.A, read(Reg8.A))
+    fun ld_78(vararg args: Int) = write(Reg8.A, read(Reg8.B))
+    fun ld_79(vararg args: Int) = write(Reg8.A, read(Reg8.C))
+    fun ld_7a(vararg args: Int) = write(Reg8.A, read(Reg8.D))
+    fun ld_7b(vararg args: Int) = write(Reg8.A, read(Reg8.E))
+    fun ld_7c(vararg args: Int) = write(Reg8.A, read(Reg8.H))
+    fun ld_7d(vararg args: Int) = write(Reg8.A, read(Reg8.L))
 
-    fun ld_0a(vararg args: Operand) =
+    fun ld_0a(vararg args: Int) =
         write(Reg8.A, mmu.get(read(Reg16.BC)).toUnsignedInt())
 
-    fun ld_1a(vararg args: Operand) =
+    fun ld_1a(vararg args: Int) =
         write(Reg8.A, mmu.get(read(Reg16.DE)).toUnsignedInt())
 
-    fun ld_7e(vararg args: Operand) =
+    fun ld_7e(vararg args: Int) =
         write(Reg8.A, mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun ld_fa(vararg args: Operand) {
-        val addr = args[0].get()
+    fun ld_fa(vararg args: Int) {
+        val addr = args.toWord()
         gb.io.tick(8)
         write(Reg8.A, mmu.get(addr).toUnsignedInt())
     }
-    fun ld_3e(vararg args: Operand) = write(Reg8.A, args[0])
 
-    fun ld_47(vararg args: Operand) = write(Reg8.B, Reg8.A)
-    fun ld_4f(vararg args: Operand) = write(Reg8.C, Reg8.A)
-    fun ld_57(vararg args: Operand) = write(Reg8.D, Reg8.A)
-    fun ld_5f(vararg args: Operand) = write(Reg8.E, Reg8.A)
-    fun ld_67(vararg args: Operand) = write(Reg8.H, Reg8.A)
-    fun ld_6f(vararg args: Operand) = write(Reg8.L, Reg8.A)
+    fun ld_3e(vararg args: Int) = write(Reg8.A, args[0])
 
-    fun ld_02(vararg args: Operand) =
+    fun ld_47(vararg args: Int) = write(Reg8.B, read(Reg8.A))
+    fun ld_4f(vararg args: Int) = write(Reg8.C, read(Reg8.A))
+    fun ld_57(vararg args: Int) = write(Reg8.D, read(Reg8.A))
+    fun ld_5f(vararg args: Int) = write(Reg8.E, read(Reg8.A))
+    fun ld_67(vararg args: Int) = write(Reg8.H, read(Reg8.A))
+    fun ld_6f(vararg args: Int) = write(Reg8.L, read(Reg8.A))
+
+    fun ld_02(vararg args: Int) =
         mmu.set(read(Reg16.BC), read(Reg8.A).toUnsignedInt())
 
-    fun ld_12(vararg args: Operand) =
+    fun ld_12(vararg args: Int) =
         mmu.set(read(Reg16.DE), read(Reg8.A).toUnsignedInt())
 
-    fun ld_77(vararg args: Operand) =
+    fun ld_77(vararg args: Int) =
         mmu.set(read(Reg16.HL), read(Reg8.A).toUnsignedInt())
 
-    fun ld_ea(vararg args: Operand) {
-        val addr = args[0].get()
+    fun ld_ea(vararg args: Int) {
+        val addr = args.toWord()
         gb.io.tick(8)
         mmu.set(addr, read(Reg8.A).toUnsignedInt())
     }
 
-    fun ld_f2(vararg args: Operand) =
+    fun ld_f2(vararg args: Int) =
         write(Reg8.A, mmu.get(0xFF00 + read(Reg8.C).toUnsignedInt()).toUnsignedInt())
 
-    fun ld_e2(vararg args: Operand) =
+    fun ld_e2(vararg args: Int) =
         mmu.set(0xFF00 + read(Reg8.C).toUnsignedInt(), read(Reg8.A).toUnsignedInt())
 
-    fun ld_3a(vararg args: Operand) {
+    fun ld_3a(vararg args: Int) {
         val hl = read(Reg16.HL)
         write(Reg8.A, mmu.get(hl).toUnsignedInt())
         write(Reg16.HL, hl - 1)
     }
 
-    fun ld_32(vararg args: Operand) {
+    fun ld_32(vararg args: Int) {
         val hl = read(Reg16.HL)
         mmu.set(hl, read(Reg8.A).toUnsignedInt())
         write(Reg16.HL, hl - 1)
     }
 
-    fun ld_2a(vararg args: Operand) {
+    fun ld_2a(vararg args: Int) {
         val hl = read(Reg16.HL)
         write(Reg8.A, mmu.get(hl).toUnsignedInt())
         write(Reg16.HL, hl + 1)
     }
 
-    fun ld_22(vararg args: Operand) {
+    fun ld_22(vararg args: Int) {
         val hl = read(Reg16.HL)
         mmu[hl] = read(Reg8.A).toUnsignedInt()
         write(Reg16.HL, hl + 1)
     }
 
-    fun ldh_e0(vararg args: Operand) {
-        val addr = 0xFF00 + args[0].get()
+    fun ldh_e0(vararg args: Int) {
+        val addr = 0xFF00 + args[0].toUnsignedInt()
         gb.io.tick(4)
         mmu.set(addr, read(Reg8.A).toUnsignedInt())
     }
 
-    fun ldh_f0(vararg args: Operand) {
-        val addr = 0xFF00 + args[0].get()
+    fun ldh_f0(vararg args: Int) {
+        val addr = 0xFF00 + args[0].toUnsignedInt()
         gb.io.tick(4)
         write(Reg8.A, mmu[addr].toUnsignedInt())
     }
 
-    fun ld_01(vararg args: Operand) = write(Reg16.BC, args[0].get())
-    fun ld_11(vararg args: Operand) = write(Reg16.DE, args[0].get())
-    fun ld_21(vararg args: Operand) = write(Reg16.HL, args[0].get())
+    fun ld_01(vararg args: Int) = write(Reg16.BC, args.toWord())
+    fun ld_11(vararg args: Int) = write(Reg16.DE, args.toWord())
+    fun ld_21(vararg args: Int) = write(Reg16.HL, args.toWord())
 
-    fun ld_31(vararg args: Operand) {
-        SP = args[0].get()
+    fun ld_31(vararg args: Int) {
+        SP = args.toWord()
     }
 
-    fun ld_f9(vararg args: Operand) {
-        SP = read(Reg16.HL)
+    fun ld_f9(vararg args: Int) {
+        SP = read(Reg16.HL).toWord()
     }
 
-    fun ld_f8(vararg args: Operand) =
-        write(Reg16.HL, alu.add_SP_n(args[0].get()))
+    fun ld_f8(vararg args: Int) =
+        write(Reg16.HL, alu.add_SP_n(args[0]))
 
-    fun ld_08(vararg args: Operand) {
-        mmu.set(args[0].get(), SP.lsb())
-        mmu.set((args[0].get() + 1).toWord(), SP.msb())
+    fun ld_08(vararg args: Int) {
+        mmu.set(args.toWord(), SP.lsb())
+        mmu.set((args.toWord() + 1).toWord(), SP.msb())
     }
 
-    fun push_f5(vararg args: Operand) = push_n(read(Reg16.AF))
-    fun push_c5(vararg args: Operand) = push_n(read(Reg16.BC))
-    fun push_d5(vararg args: Operand) = push_n(read(Reg16.DE))
-    fun push_e5(vararg args: Operand) = push_n(read(Reg16.HL))
+    fun push_f5(vararg args: Int) = push_n(read(Reg16.AF))
+    fun push_c5(vararg args: Int) = push_n(read(Reg16.BC))
+    fun push_d5(vararg args: Int) = push_n(read(Reg16.DE))
+    fun push_e5(vararg args: Int) = push_n(read(Reg16.HL))
 
-    fun pop_f1(vararg args: Operand) = write(Reg16.AF, pop_n())
-    fun pop_c1(vararg args: Operand) = write(Reg16.BC, pop_n())
-    fun pop_d1(vararg args: Operand) = write(Reg16.DE, pop_n())
-    fun pop_e1(vararg args: Operand) = write(Reg16.HL, pop_n())
+    fun pop_f1(vararg args: Int) = write(Reg16.AF, pop_n())
+    fun pop_c1(vararg args: Int) = write(Reg16.BC, pop_n())
+    fun pop_d1(vararg args: Int) = write(Reg16.DE, pop_n())
+    fun pop_e1(vararg args: Int) = write(Reg16.HL, pop_n())
 
-    fun add_87(vararg args: Operand) = alu.add_A_n(read(Reg8.A))
-    fun add_80(vararg args: Operand) = alu.add_A_n(read(Reg8.B))
-    fun add_81(vararg args: Operand) = alu.add_A_n(read(Reg8.C))
-    fun add_82(vararg args: Operand) = alu.add_A_n(read(Reg8.D))
-    fun add_83(vararg args: Operand) = alu.add_A_n(read(Reg8.E))
-    fun add_84(vararg args: Operand) = alu.add_A_n(read(Reg8.H))
-    fun add_85(vararg args: Operand) = alu.add_A_n(read(Reg8.L))
-    fun add_86(vararg args: Operand) =
+    fun add_87(vararg args: Int) = alu.add_A_n(read(Reg8.A))
+    fun add_80(vararg args: Int) = alu.add_A_n(read(Reg8.B))
+    fun add_81(vararg args: Int) = alu.add_A_n(read(Reg8.C))
+    fun add_82(vararg args: Int) = alu.add_A_n(read(Reg8.D))
+    fun add_83(vararg args: Int) = alu.add_A_n(read(Reg8.E))
+    fun add_84(vararg args: Int) = alu.add_A_n(read(Reg8.H))
+    fun add_85(vararg args: Int) = alu.add_A_n(read(Reg8.L))
+    fun add_86(vararg args: Int) =
         alu.add_A_n(mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun add_c6(vararg args: Operand) = alu.add_A_n(args[0].get())
+    fun add_c6(vararg args: Int) = alu.add_A_n(args[0].toUnsignedInt())
 
-    fun adc_8f(vararg args: Operand) = alu.adc_A_n(read(Reg8.A))
-    fun adc_88(vararg args: Operand) = alu.adc_A_n(read(Reg8.B))
-    fun adc_89(vararg args: Operand) = alu.adc_A_n(read(Reg8.C))
-    fun adc_8a(vararg args: Operand) = alu.adc_A_n(read(Reg8.D))
-    fun adc_8b(vararg args: Operand) = alu.adc_A_n(read(Reg8.E))
-    fun adc_8c(vararg args: Operand) = alu.adc_A_n(read(Reg8.H))
-    fun adc_8d(vararg args: Operand) = alu.adc_A_n(read(Reg8.L))
-    fun adc_8e(vararg args: Operand) =
+    fun adc_8f(vararg args: Int) = alu.adc_A_n(read(Reg8.A))
+    fun adc_88(vararg args: Int) = alu.adc_A_n(read(Reg8.B))
+    fun adc_89(vararg args: Int) = alu.adc_A_n(read(Reg8.C))
+    fun adc_8a(vararg args: Int) = alu.adc_A_n(read(Reg8.D))
+    fun adc_8b(vararg args: Int) = alu.adc_A_n(read(Reg8.E))
+    fun adc_8c(vararg args: Int) = alu.adc_A_n(read(Reg8.H))
+    fun adc_8d(vararg args: Int) = alu.adc_A_n(read(Reg8.L))
+    fun adc_8e(vararg args: Int) =
         alu.adc_A_n(mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun adc_ce(vararg args: Operand) = alu.adc_A_n(args[0].get())
+    fun adc_ce(vararg args: Int) = alu.adc_A_n(args[0].toUnsignedInt())
 
-    fun sub_97(vararg args: Operand) = alu.sub_n(read(Reg8.A))
-    fun sub_90(vararg args: Operand) = alu.sub_n(read(Reg8.B))
-    fun sub_91(vararg args: Operand) = alu.sub_n(read(Reg8.C))
-    fun sub_92(vararg args: Operand) = alu.sub_n(read(Reg8.D))
-    fun sub_93(vararg args: Operand) = alu.sub_n(read(Reg8.E))
-    fun sub_94(vararg args: Operand) = alu.sub_n(read(Reg8.H))
-    fun sub_95(vararg args: Operand) = alu.sub_n(read(Reg8.L))
-    fun sub_96(vararg args: Operand) =
+    fun sub_97(vararg args: Int) = alu.sub_n(read(Reg8.A))
+    fun sub_90(vararg args: Int) = alu.sub_n(read(Reg8.B))
+    fun sub_91(vararg args: Int) = alu.sub_n(read(Reg8.C))
+    fun sub_92(vararg args: Int) = alu.sub_n(read(Reg8.D))
+    fun sub_93(vararg args: Int) = alu.sub_n(read(Reg8.E))
+    fun sub_94(vararg args: Int) = alu.sub_n(read(Reg8.H))
+    fun sub_95(vararg args: Int) = alu.sub_n(read(Reg8.L))
+    fun sub_96(vararg args: Int) =
         alu.sub_n(mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun sub_d6(vararg args: Operand) = alu.sub_n(args[0].get())
+    fun sub_d6(vararg args: Int) = alu.sub_n(args[0].toUnsignedInt())
 
-    fun sbc_9f(vararg args: Operand) = alu.sbc_A_n(read(Reg8.A))
-    fun sbc_98(vararg args: Operand) = alu.sbc_A_n(read(Reg8.B))
-    fun sbc_99(vararg args: Operand) = alu.sbc_A_n(read(Reg8.C))
-    fun sbc_9a(vararg args: Operand) = alu.sbc_A_n(read(Reg8.D))
-    fun sbc_9b(vararg args: Operand) = alu.sbc_A_n(read(Reg8.E))
-    fun sbc_9c(vararg args: Operand) = alu.sbc_A_n(read(Reg8.H))
-    fun sbc_9d(vararg args: Operand) = alu.sbc_A_n(read(Reg8.L))
-    fun sbc_9e(vararg args: Operand) =
+    fun sbc_9f(vararg args: Int) = alu.sbc_A_n(read(Reg8.A))
+    fun sbc_98(vararg args: Int) = alu.sbc_A_n(read(Reg8.B))
+    fun sbc_99(vararg args: Int) = alu.sbc_A_n(read(Reg8.C))
+    fun sbc_9a(vararg args: Int) = alu.sbc_A_n(read(Reg8.D))
+    fun sbc_9b(vararg args: Int) = alu.sbc_A_n(read(Reg8.E))
+    fun sbc_9c(vararg args: Int) = alu.sbc_A_n(read(Reg8.H))
+    fun sbc_9d(vararg args: Int) = alu.sbc_A_n(read(Reg8.L))
+    fun sbc_9e(vararg args: Int) =
         alu.sbc_A_n(mmu.get(read(Reg16.HL)).toUnsignedInt())
 
-    fun sbc_de(vararg args: Operand) = alu.sbc_A_n(args[0].get())
+    fun sbc_de(vararg args: Int) = alu.sbc_A_n(args[0].toUnsignedInt())
 
-    fun and_a7(vararg args: Operand) = alu.and(read(Reg8.A))
-    fun and_a0(vararg args: Operand) = alu.and(read(Reg8.B))
-    fun and_a1(vararg args: Operand) = alu.and(read(Reg8.C))
-    fun and_a2(vararg args: Operand) = alu.and(read(Reg8.D))
-    fun and_a3(vararg args: Operand) = alu.and(read(Reg8.E))
-    fun and_a4(vararg args: Operand) = alu.and(read(Reg8.H))
-    fun and_a5(vararg args: Operand) = alu.and(read(Reg8.L))
-    fun and_a6(vararg args: Operand) = alu.and(mmu.get(read(Reg16.HL)).toUnsignedInt())
-    fun and_e6(vararg args: Operand) = alu.and(args[0].get())
+    fun and_a7(vararg args: Int) = alu.and(read(Reg8.A))
+    fun and_a0(vararg args: Int) = alu.and(read(Reg8.B))
+    fun and_a1(vararg args: Int) = alu.and(read(Reg8.C))
+    fun and_a2(vararg args: Int) = alu.and(read(Reg8.D))
+    fun and_a3(vararg args: Int) = alu.and(read(Reg8.E))
+    fun and_a4(vararg args: Int) = alu.and(read(Reg8.H))
+    fun and_a5(vararg args: Int) = alu.and(read(Reg8.L))
+    fun and_a6(vararg args: Int) = alu.and(mmu.get(read(Reg16.HL)).toUnsignedInt())
+    fun and_e6(vararg args: Int) = alu.and(args[0].toUnsignedInt())
 
-    fun or_b7(vararg args: Operand) = alu.or(read(Reg8.A))
-    fun or_b0(vararg args: Operand) = alu.or(read(Reg8.B))
-    fun or_b1(vararg args: Operand) = alu.or(read(Reg8.C))
-    fun or_b2(vararg args: Operand) = alu.or(read(Reg8.D))
-    fun or_b3(vararg args: Operand) = alu.or(read(Reg8.E))
-    fun or_b4(vararg args: Operand) = alu.or(read(Reg8.H))
-    fun or_b5(vararg args: Operand) = alu.or(read(Reg8.L))
-    fun or_b6(vararg args: Operand) = alu.or(mmu.get(read(Reg16.HL)).toUnsignedInt())
-    fun or_f6(vararg args: Operand) = alu.or(args[0].get())
+    fun or_b7(vararg args: Int) = alu.or(read(Reg8.A))
+    fun or_b0(vararg args: Int) = alu.or(read(Reg8.B))
+    fun or_b1(vararg args: Int) = alu.or(read(Reg8.C))
+    fun or_b2(vararg args: Int) = alu.or(read(Reg8.D))
+    fun or_b3(vararg args: Int) = alu.or(read(Reg8.E))
+    fun or_b4(vararg args: Int) = alu.or(read(Reg8.H))
+    fun or_b5(vararg args: Int) = alu.or(read(Reg8.L))
+    fun or_b6(vararg args: Int) = alu.or(mmu.get(read(Reg16.HL)).toUnsignedInt())
+    fun or_f6(vararg args: Int) = alu.or(args[0].toUnsignedInt())
 
-    fun xor_af(vararg args: Operand) = alu.xor(read(Reg8.A))
-    fun xor_a8(vararg args: Operand) = alu.xor(read(Reg8.B))
-    fun xor_a9(vararg args: Operand) = alu.xor(read(Reg8.C))
-    fun xor_aa(vararg args: Operand) = alu.xor(read(Reg8.D))
-    fun xor_ab(vararg args: Operand) = alu.xor(read(Reg8.E))
-    fun xor_ac(vararg args: Operand) = alu.xor(read(Reg8.H))
-    fun xor_ad(vararg args: Operand) = alu.xor(read(Reg8.L))
-    fun xor_ae(vararg args: Operand) = alu.xor(mmu.get(read(Reg16.HL)).toUnsignedInt())
-    fun xor_ee(vararg args: Operand) = alu.xor(args[0].get())
+    fun xor_af(vararg args: Int) = alu.xor(read(Reg8.A))
+    fun xor_a8(vararg args: Int) = alu.xor(read(Reg8.B))
+    fun xor_a9(vararg args: Int) = alu.xor(read(Reg8.C))
+    fun xor_aa(vararg args: Int) = alu.xor(read(Reg8.D))
+    fun xor_ab(vararg args: Int) = alu.xor(read(Reg8.E))
+    fun xor_ac(vararg args: Int) = alu.xor(read(Reg8.H))
+    fun xor_ad(vararg args: Int) = alu.xor(read(Reg8.L))
+    fun xor_ae(vararg args: Int) = alu.xor(mmu.get(read(Reg16.HL)).toUnsignedInt())
+    fun xor_ee(vararg args: Int) = alu.xor(args[0].toUnsignedInt())
 
-    fun cp_bf(vararg args: Operand) = alu.cp_n(read(Reg8.A))
-    fun cp_b8(vararg args: Operand) = alu.cp_n(read(Reg8.B))
-    fun cp_b9(vararg args: Operand) = alu.cp_n(read(Reg8.C))
-    fun cp_ba(vararg args: Operand) = alu.cp_n(read(Reg8.D))
-    fun cp_bb(vararg args: Operand) = alu.cp_n(read(Reg8.E))
-    fun cp_bc(vararg args: Operand) = alu.cp_n(read(Reg8.H))
-    fun cp_bd(vararg args: Operand) = alu.cp_n(read(Reg8.L))
-    fun cp_be(vararg args: Operand) = alu.cp_n(mmu[read(Reg16.HL)].toUnsignedInt())
-    fun cp_fe(vararg args: Operand) = alu.cp_n(args[0].get())
+    fun cp_bf(vararg args: Int) = alu.cp_n(read(Reg8.A))
+    fun cp_b8(vararg args: Int) = alu.cp_n(read(Reg8.B))
+    fun cp_b9(vararg args: Int) = alu.cp_n(read(Reg8.C))
+    fun cp_ba(vararg args: Int) = alu.cp_n(read(Reg8.D))
+    fun cp_bb(vararg args: Int) = alu.cp_n(read(Reg8.E))
+    fun cp_bc(vararg args: Int) = alu.cp_n(read(Reg8.H))
+    fun cp_bd(vararg args: Int) = alu.cp_n(read(Reg8.L))
+    fun cp_be(vararg args: Int) = alu.cp_n(mmu[read(Reg16.HL)].toUnsignedInt())
+    fun cp_fe(vararg args: Int) = alu.cp_n(args[0].toUnsignedInt())
 
-    fun inc_3c(vararg args: Operand) = alu.inc_n(Reg8.A)
-    fun inc_04(vararg args: Operand) = alu.inc_n(Reg8.B)
-    fun inc_0c(vararg args: Operand) = alu.inc_n(Reg8.C)
-    fun inc_14(vararg args: Operand) = alu.inc_n(Reg8.D)
-    fun inc_1c(vararg args: Operand) = alu.inc_n(Reg8.E)
-    fun inc_24(vararg args: Operand) = alu.inc_n(Reg8.H)
-    fun inc_2c(vararg args: Operand) = alu.inc_n(Reg8.L)
-    fun inc_34(vararg args: Operand) {
+    fun inc_3c(vararg args: Int) = alu.inc_n(Reg8.A)
+    fun inc_04(vararg args: Int) = alu.inc_n(Reg8.B)
+    fun inc_0c(vararg args: Int) = alu.inc_n(Reg8.C)
+    fun inc_14(vararg args: Int) = alu.inc_n(Reg8.D)
+    fun inc_1c(vararg args: Int) = alu.inc_n(Reg8.E)
+    fun inc_24(vararg args: Int) = alu.inc_n(Reg8.H)
+    fun inc_2c(vararg args: Int) = alu.inc_n(Reg8.L)
+    fun inc_34(vararg args: Int) {
         val addr = read(Reg16.HL)
         val value = mmu.get(addr)
         gb.io.tick(4)
         mmu.set(addr, alu.inc_n(value))
     }
 
-    fun dec_3d(vararg args: Operand) = alu.dec_n(Reg8.A)
-    fun dec_05(vararg args: Operand) = alu.dec_n(Reg8.B)
+    fun dec_3d(vararg args: Int) = alu.dec_n(Reg8.A)
+    fun dec_05(vararg args: Int) = alu.dec_n(Reg8.B)
 
-    fun dec_0d(vararg args: Operand) = alu.dec_n(Reg8.C)
-    fun dec_15(vararg args: Operand) = alu.dec_n(Reg8.D)
-    fun dec_1d(vararg args: Operand) = alu.dec_n(Reg8.E)
-    fun dec_25(vararg args: Operand) = alu.dec_n(Reg8.H)
-    fun dec_2d(vararg args: Operand) = alu.dec_n(Reg8.L)
-    fun dec_35(vararg args: Operand) {
+    fun dec_0d(vararg args: Int) = alu.dec_n(Reg8.C)
+    fun dec_15(vararg args: Int) = alu.dec_n(Reg8.D)
+    fun dec_1d(vararg args: Int) = alu.dec_n(Reg8.E)
+    fun dec_25(vararg args: Int) = alu.dec_n(Reg8.H)
+    fun dec_2d(vararg args: Int) = alu.dec_n(Reg8.L)
+    fun dec_35(vararg args: Int) {
         val addr = read(Reg16.HL)
         val value = mmu.get(addr)
         gb.io.tick(4)
         mmu.set(addr, alu.dec_n(value))
     }
 
-    fun add_09(vararg args: Operand) = alu.add_HL_n(read(Reg16.BC))
-    fun add_19(vararg args: Operand) = alu.add_HL_n(read(Reg16.DE))
-    fun add_29(vararg args: Operand) = alu.add_HL_n(read(Reg16.HL))
-    fun add_39(vararg args: Operand) = alu.add_HL_n(SP)
+    fun add_09(vararg args: Int) = alu.add_HL_n(read(Reg16.BC))
+    fun add_19(vararg args: Int) = alu.add_HL_n(read(Reg16.DE))
+    fun add_29(vararg args: Int) = alu.add_HL_n(read(Reg16.HL))
+    fun add_39(vararg args: Int) = alu.add_HL_n(SP)
 
-    fun add_e8(vararg args: Operand) {
-        SP = alu.add_SP_n(args[0].get())
+    fun add_e8(vararg args: Int) {
+        SP = alu.add_SP_n(args[0])
     }
 
-    fun inc_03(vararg args: Operand) = alu.inc_n(Reg16.BC)
-    fun inc_13(vararg args: Operand) = alu.inc_n(Reg16.DE)
-    fun inc_23(vararg args: Operand) = alu.inc_n(Reg16.HL)
+    fun inc_03(vararg args: Int) = alu.inc_n(Reg16.BC)
+    fun inc_13(vararg args: Int) = alu.inc_n(Reg16.DE)
+    fun inc_23(vararg args: Int) = alu.inc_n(Reg16.HL)
 
-    fun inc_33(vararg args: Operand) {
+    fun inc_33(vararg args: Int) {
         SP = (SP + 1).toWord()
     }
 
-    fun dec_0b(vararg args: Operand) = alu.dec_n(Reg16.BC)
-    fun dec_1b(vararg args: Operand) = alu.dec_n(Reg16.DE)
-    fun dec_2b(vararg args: Operand) = alu.dec_n(Reg16.HL)
+    fun dec_0b(vararg args: Int) = alu.dec_n(Reg16.BC)
+    fun dec_1b(vararg args: Int) = alu.dec_n(Reg16.DE)
+    fun dec_2b(vararg args: Int) = alu.dec_n(Reg16.HL)
 
-    fun dec_3b(vararg args: Operand) {
+    fun dec_3b(vararg args: Int) {
         SP = (SP - 1).toWord()
     }
 
-    fun swap_37(vararg args: Operand) = swap_n(Reg8.A)
-    fun swap_30(vararg args: Operand) = swap_n(Reg8.B)
-    fun swap_31(vararg args: Operand) = swap_n(Reg8.C)
-    fun swap_32(vararg args: Operand) = swap_n(Reg8.D)
-    fun swap_33(vararg args: Operand) = swap_n(Reg8.E)
-    fun swap_34(vararg args: Operand) = swap_n(Reg8.H)
-    fun swap_35(vararg args: Operand) = swap_n(Reg8.L)
-    fun swap_36(vararg args: Operand) =
+    fun swap_37(vararg args: Int) = swap_n(Reg8.A)
+    fun swap_30(vararg args: Int) = swap_n(Reg8.B)
+    fun swap_31(vararg args: Int) = swap_n(Reg8.C)
+    fun swap_32(vararg args: Int) = swap_n(Reg8.D)
+    fun swap_33(vararg args: Int) = swap_n(Reg8.E)
+    fun swap_34(vararg args: Int) = swap_n(Reg8.H)
+    fun swap_35(vararg args: Int) = swap_n(Reg8.L)
+    fun swap_36(vararg args: Int) =
         mmu.set(read(Reg16.HL), swap_n(mmu.get(read(Reg16.HL))).toUnsignedInt())
 
-    fun daa_27(vararg args: Operand) = daa()
+    fun daa_27(vararg args: Int) = daa()
 
-    fun cpl_2f(vararg args: Operand) = cpl()
+    fun cpl_2f(vararg args: Int) = cpl()
 
-    fun ccf_3f(vararg args: Operand) = ccf()
+    fun ccf_3f(vararg args: Int) = ccf()
 
-    fun scf_37(vararg args: Operand) = scf()
+    fun scf_37(vararg args: Int) = scf()
 
-    fun halt_76(vararg args: Operand) = halt()
-    fun stop_10(vararg args: Operand) = stop()
-    fun di_f3(vararg args: Operand) = di()
-    fun ei_fb(vararg args: Operand) = ei()
+    fun halt_76(vararg args: Int) = halt()
+    fun stop_10(vararg args: Int) = stop()
+    fun di_f3(vararg args: Int) = di()
+    fun ei_fb(vararg args: Int) = ei()
 
-    fun rlca_07(vararg args: Operand) = rlca()
-    fun rla_17(vararg args: Operand) = rla()
+    fun rlca_07(vararg args: Int) = rlca()
+    fun rla_17(vararg args: Int) = rla()
 
-    fun rrca_0f(vararg args: Operand) = rrca()
-    fun rra_1f(vararg args: Operand) = rra()
+    fun rrca_0f(vararg args: Int) = rrca()
+    fun rra_1f(vararg args: Int) = rra()
 
-    fun rlc_07(vararg args: Operand) = rlc_n(Reg8.A)
-    fun rlc_00(vararg args: Operand) = rlc_n(Reg8.B)
-    fun rlc_01(vararg args: Operand) = rlc_n(Reg8.C)
-    fun rlc_02(vararg args: Operand) = rlc_n(Reg8.D)
-    fun rlc_03(vararg args: Operand) = rlc_n(Reg8.E)
-    fun rlc_04(vararg args: Operand) = rlc_n(Reg8.H)
-    fun rlc_05(vararg args: Operand) = rlc_n(Reg8.L)
-    fun rlc_06(vararg args: Operand) {
-        gb.io.tick(4)
-        val addr = read(Reg16.HL)
-        val value = mmu.get(addr).toByte()
-        gb.io.tick(4)
-        mmu.set(addr, rlc_n(value).toUnsignedInt())
-    }
+    fun rlc_07(vararg args: Int) = rlc_n(Reg8.A)
+    fun rlc_00(vararg args: Int) = rlc_n(Reg8.B)
+    fun rlc_01(vararg args: Int) = rlc_n(Reg8.C)
+    fun rlc_02(vararg args: Int) = rlc_n(Reg8.D)
+    fun rlc_03(vararg args: Int) = rlc_n(Reg8.E)
+    fun rlc_04(vararg args: Int) = rlc_n(Reg8.H)
+    fun rlc_05(vararg args: Int) = rlc_n(Reg8.L)
+    fun rlc_06(vararg args: Int) =
+        mmu.set(read(Reg16.HL), rlc_n(mmu.get(read(Reg16.HL)).toByte()).toUnsignedInt())
 
-    fun rl_17(vararg args: Operand) = rl_n(Reg8.A)
-    fun rl_10(vararg args: Operand) = rl_n(Reg8.B)
-    fun rl_11(vararg args: Operand) = rl_n(Reg8.C)
-    fun rl_12(vararg args: Operand) = rl_n(Reg8.D)
-    fun rl_13(vararg args: Operand) = rl_n(Reg8.E)
-    fun rl_14(vararg args: Operand) = rl_n(Reg8.H)
-    fun rl_15(vararg args: Operand) = rl_n(Reg8.L)
-    fun rl_16(vararg args: Operand) {
+    fun rl_17(vararg args: Int) = rl_n(Reg8.A)
+    fun rl_10(vararg args: Int) = rl_n(Reg8.B)
+    fun rl_11(vararg args: Int) = rl_n(Reg8.C)
+    fun rl_12(vararg args: Int) = rl_n(Reg8.D)
+    fun rl_13(vararg args: Int) = rl_n(Reg8.E)
+    fun rl_14(vararg args: Int) = rl_n(Reg8.H)
+    fun rl_15(vararg args: Int) = rl_n(Reg8.L)
+    fun rl_16(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1182,14 +1151,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, rl_n(value).toUnsignedInt())
     }
 
-    fun rrc_0f(vararg args: Operand) = rrc_n(Reg8.A)
-    fun rrc_08(vararg args: Operand) = rrc_n(Reg8.B)
-    fun rrc_09(vararg args: Operand) = rrc_n(Reg8.C)
-    fun rrc_0a(vararg args: Operand) = rrc_n(Reg8.D)
-    fun rrc_0b(vararg args: Operand) = rrc_n(Reg8.E)
-    fun rrc_0c(vararg args: Operand) = rrc_n(Reg8.H)
-    fun rrc_0d(vararg args: Operand) = rrc_n(Reg8.L)
-    fun rrc_0e(vararg args: Operand) {
+    fun rrc_0f(vararg args: Int) = rrc_n(Reg8.A)
+    fun rrc_08(vararg args: Int) = rrc_n(Reg8.B)
+    fun rrc_09(vararg args: Int) = rrc_n(Reg8.C)
+    fun rrc_0a(vararg args: Int) = rrc_n(Reg8.D)
+    fun rrc_0b(vararg args: Int) = rrc_n(Reg8.E)
+    fun rrc_0c(vararg args: Int) = rrc_n(Reg8.H)
+    fun rrc_0d(vararg args: Int) = rrc_n(Reg8.L)
+    fun rrc_0e(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1197,14 +1166,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, rrc_n(value).toUnsignedInt())
     }
 
-    fun rr_1f(vararg args: Operand) = rr_n(Reg8.A)
-    fun rr_18(vararg args: Operand) = rr_n(Reg8.B)
-    fun rr_19(vararg args: Operand) = rr_n(Reg8.C)
-    fun rr_1a(vararg args: Operand) = rr_n(Reg8.D)
-    fun rr_1b(vararg args: Operand) = rr_n(Reg8.E)
-    fun rr_1c(vararg args: Operand) = rr_n(Reg8.H)
-    fun rr_1d(vararg args: Operand) = rr_n(Reg8.L)
-    fun rr_1e(vararg args: Operand) {
+    fun rr_1f(vararg args: Int) = rr_n(Reg8.A)
+    fun rr_18(vararg args: Int) = rr_n(Reg8.B)
+    fun rr_19(vararg args: Int) = rr_n(Reg8.C)
+    fun rr_1a(vararg args: Int) = rr_n(Reg8.D)
+    fun rr_1b(vararg args: Int) = rr_n(Reg8.E)
+    fun rr_1c(vararg args: Int) = rr_n(Reg8.H)
+    fun rr_1d(vararg args: Int) = rr_n(Reg8.L)
+    fun rr_1e(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1212,14 +1181,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, rr_n(value).toUnsignedInt())
     }
 
-    fun sla_27(vararg args: Operand) = sla_n(Reg8.A)
-    fun sla_20(vararg args: Operand) = sla_n(Reg8.B)
-    fun sla_21(vararg args: Operand) = sla_n(Reg8.C)
-    fun sla_22(vararg args: Operand) = sla_n(Reg8.D)
-    fun sla_23(vararg args: Operand) = sla_n(Reg8.E)
-    fun sla_24(vararg args: Operand) = sla_n(Reg8.H)
-    fun sla_25(vararg args: Operand) = sla_n(Reg8.L)
-    fun sla_26(vararg args: Operand) {
+    fun sla_27(vararg args: Int) = sla_n(Reg8.A)
+    fun sla_20(vararg args: Int) = sla_n(Reg8.B)
+    fun sla_21(vararg args: Int) = sla_n(Reg8.C)
+    fun sla_22(vararg args: Int) = sla_n(Reg8.D)
+    fun sla_23(vararg args: Int) = sla_n(Reg8.E)
+    fun sla_24(vararg args: Int) = sla_n(Reg8.H)
+    fun sla_25(vararg args: Int) = sla_n(Reg8.L)
+    fun sla_26(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1227,14 +1196,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, sla_n(value).toUnsignedInt())
     }
 
-    fun sra_2f(vararg args: Operand) = sra_n(Reg8.A)
-    fun sra_28(vararg args: Operand) = sra_n(Reg8.B)
-    fun sra_29(vararg args: Operand) = sra_n(Reg8.C)
-    fun sra_2a(vararg args: Operand) = sra_n(Reg8.D)
-    fun sra_2b(vararg args: Operand) = sra_n(Reg8.E)
-    fun sra_2c(vararg args: Operand) = sra_n(Reg8.H)
-    fun sra_2d(vararg args: Operand) = sra_n(Reg8.L)
-    fun sra_2e(vararg args: Operand) {
+    fun sra_2f(vararg args: Int) = sra_n(Reg8.A)
+    fun sra_28(vararg args: Int) = sra_n(Reg8.B)
+    fun sra_29(vararg args: Int) = sra_n(Reg8.C)
+    fun sra_2a(vararg args: Int) = sra_n(Reg8.D)
+    fun sra_2b(vararg args: Int) = sra_n(Reg8.E)
+    fun sra_2c(vararg args: Int) = sra_n(Reg8.H)
+    fun sra_2d(vararg args: Int) = sra_n(Reg8.L)
+    fun sra_2e(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1242,14 +1211,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, sra_n(value).toUnsignedInt())
     }
 
-    fun srl_3f(vararg args: Operand) = srl_n(Reg8.A)
-    fun srl_38(vararg args: Operand) = srl_n(Reg8.B)
-    fun srl_39(vararg args: Operand) = srl_n(Reg8.C)
-    fun srl_3a(vararg args: Operand) = srl_n(Reg8.D)
-    fun srl_3b(vararg args: Operand) = srl_n(Reg8.E)
-    fun srl_3c(vararg args: Operand) = srl_n(Reg8.H)
-    fun srl_3d(vararg args: Operand) = srl_n(Reg8.L)
-    fun srl_3e(vararg args: Operand) {
+    fun srl_3f(vararg args: Int) = srl_n(Reg8.A)
+    fun srl_38(vararg args: Int) = srl_n(Reg8.B)
+    fun srl_39(vararg args: Int) = srl_n(Reg8.C)
+    fun srl_3a(vararg args: Int) = srl_n(Reg8.D)
+    fun srl_3b(vararg args: Int) = srl_n(Reg8.E)
+    fun srl_3c(vararg args: Int) = srl_n(Reg8.H)
+    fun srl_3d(vararg args: Int) = srl_n(Reg8.L)
+    fun srl_3e(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1257,118 +1226,118 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, srl_n(value).toUnsignedInt())
     }
 
-    fun bit_47(vararg args: Operand) = bit_b_r(0, read(Reg8.A))
-    fun bit_40(vararg args: Operand) = bit_b_r(0, read(Reg8.B))
-    fun bit_41(vararg args: Operand) = bit_b_r(0, read(Reg8.C))
-    fun bit_42(vararg args: Operand) = bit_b_r(0, read(Reg8.D))
-    fun bit_43(vararg args: Operand) = bit_b_r(0, read(Reg8.E))
-    fun bit_44(vararg args: Operand) = bit_b_r(0, read(Reg8.H))
-    fun bit_45(vararg args: Operand) = bit_b_r(0, read(Reg8.L))
-    fun bit_46(vararg args: Operand) {
+    fun bit_47(vararg args: Int) = bit_b_r(0, read(Reg8.A))
+    fun bit_40(vararg args: Int) = bit_b_r(0, read(Reg8.B))
+    fun bit_41(vararg args: Int) = bit_b_r(0, read(Reg8.C))
+    fun bit_42(vararg args: Int) = bit_b_r(0, read(Reg8.D))
+    fun bit_43(vararg args: Int) = bit_b_r(0, read(Reg8.E))
+    fun bit_44(vararg args: Int) = bit_b_r(0, read(Reg8.H))
+    fun bit_45(vararg args: Int) = bit_b_r(0, read(Reg8.L))
+    fun bit_46(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(0, mmu.get(addr).toByte())
     }
 
-    fun bit_4f(vararg args: Operand) = bit_b_r(1, read(Reg8.A))
-    fun bit_48(vararg args: Operand) = bit_b_r(1, read(Reg8.B))
-    fun bit_49(vararg args: Operand) = bit_b_r(1, read(Reg8.C))
-    fun bit_4a(vararg args: Operand) = bit_b_r(1, read(Reg8.D))
-    fun bit_4b(vararg args: Operand) = bit_b_r(1, read(Reg8.E))
-    fun bit_4c(vararg args: Operand) = bit_b_r(1, read(Reg8.H))
-    fun bit_4d(vararg args: Operand) = bit_b_r(1, read(Reg8.L))
-    fun bit_4e(vararg args: Operand) {
+    fun bit_4f(vararg args: Int) = bit_b_r(1, read(Reg8.A))
+    fun bit_48(vararg args: Int) = bit_b_r(1, read(Reg8.B))
+    fun bit_49(vararg args: Int) = bit_b_r(1, read(Reg8.C))
+    fun bit_4a(vararg args: Int) = bit_b_r(1, read(Reg8.D))
+    fun bit_4b(vararg args: Int) = bit_b_r(1, read(Reg8.E))
+    fun bit_4c(vararg args: Int) = bit_b_r(1, read(Reg8.H))
+    fun bit_4d(vararg args: Int) = bit_b_r(1, read(Reg8.L))
+    fun bit_4e(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(1, mmu.get(addr).toByte())
     }
 
-    fun bit_57(vararg args: Operand) = bit_b_r(2, read(Reg8.A))
-    fun bit_50(vararg args: Operand) = bit_b_r(2, read(Reg8.B))
-    fun bit_51(vararg args: Operand) = bit_b_r(2, read(Reg8.C))
-    fun bit_52(vararg args: Operand) = bit_b_r(2, read(Reg8.D))
-    fun bit_53(vararg args: Operand) = bit_b_r(2, read(Reg8.E))
-    fun bit_54(vararg args: Operand) = bit_b_r(2, read(Reg8.H))
-    fun bit_55(vararg args: Operand) = bit_b_r(2, read(Reg8.L))
-    fun bit_56(vararg args: Operand) {
+    fun bit_57(vararg args: Int) = bit_b_r(2, read(Reg8.A))
+    fun bit_50(vararg args: Int) = bit_b_r(2, read(Reg8.B))
+    fun bit_51(vararg args: Int) = bit_b_r(2, read(Reg8.C))
+    fun bit_52(vararg args: Int) = bit_b_r(2, read(Reg8.D))
+    fun bit_53(vararg args: Int) = bit_b_r(2, read(Reg8.E))
+    fun bit_54(vararg args: Int) = bit_b_r(2, read(Reg8.H))
+    fun bit_55(vararg args: Int) = bit_b_r(2, read(Reg8.L))
+    fun bit_56(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(2, mmu.get(addr).toByte())
     }
 
-    fun bit_5f(vararg args: Operand) = bit_b_r(3, read(Reg8.A))
-    fun bit_58(vararg args: Operand) = bit_b_r(3, read(Reg8.B))
-    fun bit_59(vararg args: Operand) = bit_b_r(3, read(Reg8.C))
-    fun bit_5a(vararg args: Operand) = bit_b_r(3, read(Reg8.D))
-    fun bit_5b(vararg args: Operand) = bit_b_r(3, read(Reg8.E))
-    fun bit_5c(vararg args: Operand) = bit_b_r(3, read(Reg8.H))
-    fun bit_5d(vararg args: Operand) = bit_b_r(3, read(Reg8.L))
-    fun bit_5e(vararg args: Operand) {
+    fun bit_5f(vararg args: Int) = bit_b_r(3, read(Reg8.A))
+    fun bit_58(vararg args: Int) = bit_b_r(3, read(Reg8.B))
+    fun bit_59(vararg args: Int) = bit_b_r(3, read(Reg8.C))
+    fun bit_5a(vararg args: Int) = bit_b_r(3, read(Reg8.D))
+    fun bit_5b(vararg args: Int) = bit_b_r(3, read(Reg8.E))
+    fun bit_5c(vararg args: Int) = bit_b_r(3, read(Reg8.H))
+    fun bit_5d(vararg args: Int) = bit_b_r(3, read(Reg8.L))
+    fun bit_5e(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(3, mmu.get(addr).toByte())
     }
 
-    fun bit_67(vararg args: Operand) = bit_b_r(4, read(Reg8.A))
-    fun bit_60(vararg args: Operand) = bit_b_r(4, read(Reg8.B))
-    fun bit_61(vararg args: Operand) = bit_b_r(4, read(Reg8.C))
-    fun bit_62(vararg args: Operand) = bit_b_r(4, read(Reg8.D))
-    fun bit_63(vararg args: Operand) = bit_b_r(4, read(Reg8.E))
-    fun bit_64(vararg args: Operand) = bit_b_r(4, read(Reg8.H))
-    fun bit_65(vararg args: Operand) = bit_b_r(4, read(Reg8.L))
-    fun bit_66(vararg args: Operand) {
+    fun bit_67(vararg args: Int) = bit_b_r(4, read(Reg8.A))
+    fun bit_60(vararg args: Int) = bit_b_r(4, read(Reg8.B))
+    fun bit_61(vararg args: Int) = bit_b_r(4, read(Reg8.C))
+    fun bit_62(vararg args: Int) = bit_b_r(4, read(Reg8.D))
+    fun bit_63(vararg args: Int) = bit_b_r(4, read(Reg8.E))
+    fun bit_64(vararg args: Int) = bit_b_r(4, read(Reg8.H))
+    fun bit_65(vararg args: Int) = bit_b_r(4, read(Reg8.L))
+    fun bit_66(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(4, mmu.get(addr).toByte())
     }
 
-    fun bit_6f(vararg args: Operand) = bit_b_r(5, read(Reg8.A))
-    fun bit_68(vararg args: Operand) = bit_b_r(5, read(Reg8.B))
-    fun bit_69(vararg args: Operand) = bit_b_r(5, read(Reg8.C))
-    fun bit_6a(vararg args: Operand) = bit_b_r(5, read(Reg8.D))
-    fun bit_6b(vararg args: Operand) = bit_b_r(5, read(Reg8.E))
-    fun bit_6c(vararg args: Operand) = bit_b_r(5, read(Reg8.H))
-    fun bit_6d(vararg args: Operand) = bit_b_r(5, read(Reg8.L))
-    fun bit_6e(vararg args: Operand) {
+    fun bit_6f(vararg args: Int) = bit_b_r(5, read(Reg8.A))
+    fun bit_68(vararg args: Int) = bit_b_r(5, read(Reg8.B))
+    fun bit_69(vararg args: Int) = bit_b_r(5, read(Reg8.C))
+    fun bit_6a(vararg args: Int) = bit_b_r(5, read(Reg8.D))
+    fun bit_6b(vararg args: Int) = bit_b_r(5, read(Reg8.E))
+    fun bit_6c(vararg args: Int) = bit_b_r(5, read(Reg8.H))
+    fun bit_6d(vararg args: Int) = bit_b_r(5, read(Reg8.L))
+    fun bit_6e(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(5, mmu.get(addr).toByte())
     }
 
-    fun bit_77(vararg args: Operand) = bit_b_r(6, read(Reg8.A))
-    fun bit_70(vararg args: Operand) = bit_b_r(6, read(Reg8.B))
-    fun bit_71(vararg args: Operand) = bit_b_r(6, read(Reg8.C))
-    fun bit_72(vararg args: Operand) = bit_b_r(6, read(Reg8.D))
-    fun bit_73(vararg args: Operand) = bit_b_r(6, read(Reg8.E))
-    fun bit_74(vararg args: Operand) = bit_b_r(6, read(Reg8.H))
-    fun bit_75(vararg args: Operand) = bit_b_r(6, read(Reg8.L))
-    fun bit_76(vararg args: Operand) {
+    fun bit_77(vararg args: Int) = bit_b_r(6, read(Reg8.A))
+    fun bit_70(vararg args: Int) = bit_b_r(6, read(Reg8.B))
+    fun bit_71(vararg args: Int) = bit_b_r(6, read(Reg8.C))
+    fun bit_72(vararg args: Int) = bit_b_r(6, read(Reg8.D))
+    fun bit_73(vararg args: Int) = bit_b_r(6, read(Reg8.E))
+    fun bit_74(vararg args: Int) = bit_b_r(6, read(Reg8.H))
+    fun bit_75(vararg args: Int) = bit_b_r(6, read(Reg8.L))
+    fun bit_76(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(6, mmu.get(addr).toByte())
     }
 
-    fun bit_7f(vararg args: Operand) = bit_b_r(7, read(Reg8.A))
-    fun bit_78(vararg args: Operand) = bit_b_r(7, read(Reg8.B))
-    fun bit_79(vararg args: Operand) = bit_b_r(7, read(Reg8.C))
-    fun bit_7a(vararg args: Operand) = bit_b_r(7, read(Reg8.D))
-    fun bit_7b(vararg args: Operand) = bit_b_r(7, read(Reg8.E))
-    fun bit_7c(vararg args: Operand) = bit_b_r(7, read(Reg8.H))
-    fun bit_7d(vararg args: Operand) = bit_b_r(7, read(Reg8.L))
-    fun bit_7e(vararg args: Operand) {
+    fun bit_7f(vararg args: Int) = bit_b_r(7, read(Reg8.A))
+    fun bit_78(vararg args: Int) = bit_b_r(7, read(Reg8.B))
+    fun bit_79(vararg args: Int) = bit_b_r(7, read(Reg8.C))
+    fun bit_7a(vararg args: Int) = bit_b_r(7, read(Reg8.D))
+    fun bit_7b(vararg args: Int) = bit_b_r(7, read(Reg8.E))
+    fun bit_7c(vararg args: Int) = bit_b_r(7, read(Reg8.H))
+    fun bit_7d(vararg args: Int) = bit_b_r(7, read(Reg8.L))
+    fun bit_7e(vararg args: Int) {
         val addr = read(Reg16.HL)
         gb.io.tick(4)
         bit_b_r(7, mmu.get(addr).toByte())
     }
 
-    fun set_c7(vararg args: Operand) = set_b_r(0, Reg8.A)
-    fun set_c0(vararg args: Operand) = set_b_r(0, Reg8.B)
-    fun set_c1(vararg args: Operand) = set_b_r(0, Reg8.C)
-    fun set_c2(vararg args: Operand) = set_b_r(0, Reg8.D)
-    fun set_c3(vararg args: Operand) = set_b_r(0, Reg8.E)
-    fun set_c4(vararg args: Operand) = set_b_r(0, Reg8.H)
-    fun set_c5(vararg args: Operand) = set_b_r(0, Reg8.L)
-    fun set_c6(vararg args: Operand) {
+    fun set_c7(vararg args: Int) = set_b_r(0, Reg8.A)
+    fun set_c0(vararg args: Int) = set_b_r(0, Reg8.B)
+    fun set_c1(vararg args: Int) = set_b_r(0, Reg8.C)
+    fun set_c2(vararg args: Int) = set_b_r(0, Reg8.D)
+    fun set_c3(vararg args: Int) = set_b_r(0, Reg8.E)
+    fun set_c4(vararg args: Int) = set_b_r(0, Reg8.H)
+    fun set_c5(vararg args: Int) = set_b_r(0, Reg8.L)
+    fun set_c6(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1376,14 +1345,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(0, value).toUnsignedInt())
     }
 
-    fun set_cf(vararg args: Operand) = set_b_r(1, Reg8.A)
-    fun set_c8(vararg args: Operand) = set_b_r(1, Reg8.B)
-    fun set_c9(vararg args: Operand) = set_b_r(1, Reg8.C)
-    fun set_ca(vararg args: Operand) = set_b_r(1, Reg8.D)
-    fun set_cb(vararg args: Operand) = set_b_r(1, Reg8.E)
-    fun set_cc(vararg args: Operand) = set_b_r(1, Reg8.H)
-    fun set_cd(vararg args: Operand) = set_b_r(1, Reg8.L)
-    fun set_ce(vararg args: Operand) {
+    fun set_cf(vararg args: Int) = set_b_r(1, Reg8.A)
+    fun set_c8(vararg args: Int) = set_b_r(1, Reg8.B)
+    fun set_c9(vararg args: Int) = set_b_r(1, Reg8.C)
+    fun set_ca(vararg args: Int) = set_b_r(1, Reg8.D)
+    fun set_cb(vararg args: Int) = set_b_r(1, Reg8.E)
+    fun set_cc(vararg args: Int) = set_b_r(1, Reg8.H)
+    fun set_cd(vararg args: Int) = set_b_r(1, Reg8.L)
+    fun set_ce(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1391,14 +1360,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(1, value).toUnsignedInt())
     }
 
-    fun set_d7(vararg args: Operand) = set_b_r(2, Reg8.A)
-    fun set_d0(vararg args: Operand) = set_b_r(2, Reg8.B)
-    fun set_d1(vararg args: Operand) = set_b_r(2, Reg8.C)
-    fun set_d2(vararg args: Operand) = set_b_r(2, Reg8.D)
-    fun set_d3(vararg args: Operand) = set_b_r(2, Reg8.E)
-    fun set_d4(vararg args: Operand) = set_b_r(2, Reg8.H)
-    fun set_d5(vararg args: Operand) = set_b_r(2, Reg8.L)
-    fun set_d6(vararg args: Operand) {
+    fun set_d7(vararg args: Int) = set_b_r(2, Reg8.A)
+    fun set_d0(vararg args: Int) = set_b_r(2, Reg8.B)
+    fun set_d1(vararg args: Int) = set_b_r(2, Reg8.C)
+    fun set_d2(vararg args: Int) = set_b_r(2, Reg8.D)
+    fun set_d3(vararg args: Int) = set_b_r(2, Reg8.E)
+    fun set_d4(vararg args: Int) = set_b_r(2, Reg8.H)
+    fun set_d5(vararg args: Int) = set_b_r(2, Reg8.L)
+    fun set_d6(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1406,14 +1375,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(2, value).toUnsignedInt())
     }
 
-    fun set_df(vararg args: Operand) = set_b_r(3, Reg8.A)
-    fun set_d8(vararg args: Operand) = set_b_r(3, Reg8.B)
-    fun set_d9(vararg args: Operand) = set_b_r(3, Reg8.C)
-    fun set_da(vararg args: Operand) = set_b_r(3, Reg8.D)
-    fun set_db(vararg args: Operand) = set_b_r(3, Reg8.E)
-    fun set_dc(vararg args: Operand) = set_b_r(3, Reg8.H)
-    fun set_dd(vararg args: Operand) = set_b_r(3, Reg8.L)
-    fun set_de(vararg args: Operand) {
+    fun set_df(vararg args: Int) = set_b_r(3, Reg8.A)
+    fun set_d8(vararg args: Int) = set_b_r(3, Reg8.B)
+    fun set_d9(vararg args: Int) = set_b_r(3, Reg8.C)
+    fun set_da(vararg args: Int) = set_b_r(3, Reg8.D)
+    fun set_db(vararg args: Int) = set_b_r(3, Reg8.E)
+    fun set_dc(vararg args: Int) = set_b_r(3, Reg8.H)
+    fun set_dd(vararg args: Int) = set_b_r(3, Reg8.L)
+    fun set_de(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1421,14 +1390,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(3, value).toUnsignedInt())
     }
 
-    fun set_e7(vararg args: Operand) = set_b_r(4, Reg8.A)
-    fun set_e0(vararg args: Operand) = set_b_r(4, Reg8.B)
-    fun set_e1(vararg args: Operand) = set_b_r(4, Reg8.C)
-    fun set_e2(vararg args: Operand) = set_b_r(4, Reg8.D)
-    fun set_e3(vararg args: Operand) = set_b_r(4, Reg8.E)
-    fun set_e4(vararg args: Operand) = set_b_r(4, Reg8.H)
-    fun set_e5(vararg args: Operand) = set_b_r(4, Reg8.L)
-    fun set_e6(vararg args: Operand) {
+    fun set_e7(vararg args: Int) = set_b_r(4, Reg8.A)
+    fun set_e0(vararg args: Int) = set_b_r(4, Reg8.B)
+    fun set_e1(vararg args: Int) = set_b_r(4, Reg8.C)
+    fun set_e2(vararg args: Int) = set_b_r(4, Reg8.D)
+    fun set_e3(vararg args: Int) = set_b_r(4, Reg8.E)
+    fun set_e4(vararg args: Int) = set_b_r(4, Reg8.H)
+    fun set_e5(vararg args: Int) = set_b_r(4, Reg8.L)
+    fun set_e6(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1436,14 +1405,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(4, value).toUnsignedInt())
     }
 
-    fun set_ef(vararg args: Operand) = set_b_r(5, Reg8.A)
-    fun set_e8(vararg args: Operand) = set_b_r(5, Reg8.B)
-    fun set_e9(vararg args: Operand) = set_b_r(5, Reg8.C)
-    fun set_ea(vararg args: Operand) = set_b_r(5, Reg8.D)
-    fun set_eb(vararg args: Operand) = set_b_r(5, Reg8.E)
-    fun set_ec(vararg args: Operand) = set_b_r(5, Reg8.H)
-    fun set_ed(vararg args: Operand) = set_b_r(5, Reg8.L)
-    fun set_ee(vararg args: Operand) {
+    fun set_ef(vararg args: Int) = set_b_r(5, Reg8.A)
+    fun set_e8(vararg args: Int) = set_b_r(5, Reg8.B)
+    fun set_e9(vararg args: Int) = set_b_r(5, Reg8.C)
+    fun set_ea(vararg args: Int) = set_b_r(5, Reg8.D)
+    fun set_eb(vararg args: Int) = set_b_r(5, Reg8.E)
+    fun set_ec(vararg args: Int) = set_b_r(5, Reg8.H)
+    fun set_ed(vararg args: Int) = set_b_r(5, Reg8.L)
+    fun set_ee(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1451,14 +1420,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(5, value).toUnsignedInt())
     }
 
-    fun set_f7(vararg args: Operand) = set_b_r(6, Reg8.A)
-    fun set_f0(vararg args: Operand) = set_b_r(6, Reg8.B)
-    fun set_f1(vararg args: Operand) = set_b_r(6, Reg8.C)
-    fun set_f2(vararg args: Operand) = set_b_r(6, Reg8.D)
-    fun set_f3(vararg args: Operand) = set_b_r(6, Reg8.E)
-    fun set_f4(vararg args: Operand) = set_b_r(6, Reg8.H)
-    fun set_f5(vararg args: Operand) = set_b_r(6, Reg8.L)
-    fun set_f6(vararg args: Operand) {
+    fun set_f7(vararg args: Int) = set_b_r(6, Reg8.A)
+    fun set_f0(vararg args: Int) = set_b_r(6, Reg8.B)
+    fun set_f1(vararg args: Int) = set_b_r(6, Reg8.C)
+    fun set_f2(vararg args: Int) = set_b_r(6, Reg8.D)
+    fun set_f3(vararg args: Int) = set_b_r(6, Reg8.E)
+    fun set_f4(vararg args: Int) = set_b_r(6, Reg8.H)
+    fun set_f5(vararg args: Int) = set_b_r(6, Reg8.L)
+    fun set_f6(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1466,14 +1435,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(6, value).toUnsignedInt())
     }
 
-    fun set_ff(vararg args: Operand) = set_b_r(7, Reg8.A)
-    fun set_f8(vararg args: Operand) = set_b_r(7, Reg8.B)
-    fun set_f9(vararg args: Operand) = set_b_r(7, Reg8.C)
-    fun set_fa(vararg args: Operand) = set_b_r(7, Reg8.D)
-    fun set_fb(vararg args: Operand) = set_b_r(7, Reg8.E)
-    fun set_fc(vararg args: Operand) = set_b_r(7, Reg8.H)
-    fun set_fd(vararg args: Operand) = set_b_r(7, Reg8.L)
-    fun set_fe(vararg args: Operand) {
+    fun set_ff(vararg args: Int) = set_b_r(7, Reg8.A)
+    fun set_f8(vararg args: Int) = set_b_r(7, Reg8.B)
+    fun set_f9(vararg args: Int) = set_b_r(7, Reg8.C)
+    fun set_fa(vararg args: Int) = set_b_r(7, Reg8.D)
+    fun set_fb(vararg args: Int) = set_b_r(7, Reg8.E)
+    fun set_fc(vararg args: Int) = set_b_r(7, Reg8.H)
+    fun set_fd(vararg args: Int) = set_b_r(7, Reg8.L)
+    fun set_fe(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1481,14 +1450,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, set_b_r(7, value).toUnsignedInt())
     }
 
-    fun res_87(vararg args: Operand) = res_b_r(0, Reg8.A)
-    fun res_80(vararg args: Operand) = res_b_r(0, Reg8.B)
-    fun res_81(vararg args: Operand) = res_b_r(0, Reg8.C)
-    fun res_82(vararg args: Operand) = res_b_r(0, Reg8.D)
-    fun res_83(vararg args: Operand) = res_b_r(0, Reg8.E)
-    fun res_84(vararg args: Operand) = res_b_r(0, Reg8.H)
-    fun res_85(vararg args: Operand) = res_b_r(0, Reg8.L)
-    fun res_86(vararg args: Operand) {
+    fun res_87(vararg args: Int) = res_b_r(0, Reg8.A)
+    fun res_80(vararg args: Int) = res_b_r(0, Reg8.B)
+    fun res_81(vararg args: Int) = res_b_r(0, Reg8.C)
+    fun res_82(vararg args: Int) = res_b_r(0, Reg8.D)
+    fun res_83(vararg args: Int) = res_b_r(0, Reg8.E)
+    fun res_84(vararg args: Int) = res_b_r(0, Reg8.H)
+    fun res_85(vararg args: Int) = res_b_r(0, Reg8.L)
+    fun res_86(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1496,14 +1465,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(0, value).toUnsignedInt())
     }
 
-    fun res_8f(vararg args: Operand) = res_b_r(1, Reg8.A)
-    fun res_88(vararg args: Operand) = res_b_r(1, Reg8.B)
-    fun res_89(vararg args: Operand) = res_b_r(1, Reg8.C)
-    fun res_8a(vararg args: Operand) = res_b_r(1, Reg8.D)
-    fun res_8b(vararg args: Operand) = res_b_r(1, Reg8.E)
-    fun res_8c(vararg args: Operand) = res_b_r(1, Reg8.H)
-    fun res_8d(vararg args: Operand) = res_b_r(1, Reg8.L)
-    fun res_8e(vararg args: Operand) {
+    fun res_8f(vararg args: Int) = res_b_r(1, Reg8.A)
+    fun res_88(vararg args: Int) = res_b_r(1, Reg8.B)
+    fun res_89(vararg args: Int) = res_b_r(1, Reg8.C)
+    fun res_8a(vararg args: Int) = res_b_r(1, Reg8.D)
+    fun res_8b(vararg args: Int) = res_b_r(1, Reg8.E)
+    fun res_8c(vararg args: Int) = res_b_r(1, Reg8.H)
+    fun res_8d(vararg args: Int) = res_b_r(1, Reg8.L)
+    fun res_8e(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1511,14 +1480,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(1, value).toUnsignedInt())
     }
 
-    fun res_97(vararg args: Operand) = res_b_r(2, Reg8.A)
-    fun res_90(vararg args: Operand) = res_b_r(2, Reg8.B)
-    fun res_91(vararg args: Operand) = res_b_r(2, Reg8.C)
-    fun res_92(vararg args: Operand) = res_b_r(2, Reg8.D)
-    fun res_93(vararg args: Operand) = res_b_r(2, Reg8.E)
-    fun res_94(vararg args: Operand) = res_b_r(2, Reg8.H)
-    fun res_95(vararg args: Operand) = res_b_r(2, Reg8.L)
-    fun res_96(vararg args: Operand) {
+    fun res_97(vararg args: Int) = res_b_r(2, Reg8.A)
+    fun res_90(vararg args: Int) = res_b_r(2, Reg8.B)
+    fun res_91(vararg args: Int) = res_b_r(2, Reg8.C)
+    fun res_92(vararg args: Int) = res_b_r(2, Reg8.D)
+    fun res_93(vararg args: Int) = res_b_r(2, Reg8.E)
+    fun res_94(vararg args: Int) = res_b_r(2, Reg8.H)
+    fun res_95(vararg args: Int) = res_b_r(2, Reg8.L)
+    fun res_96(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1526,14 +1495,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(2, value).toUnsignedInt())
     }
 
-    fun res_9f(vararg args: Operand) = res_b_r(3, Reg8.A)
-    fun res_98(vararg args: Operand) = res_b_r(3, Reg8.B)
-    fun res_99(vararg args: Operand) = res_b_r(3, Reg8.C)
-    fun res_9a(vararg args: Operand) = res_b_r(3, Reg8.D)
-    fun res_9b(vararg args: Operand) = res_b_r(3, Reg8.E)
-    fun res_9c(vararg args: Operand) = res_b_r(3, Reg8.H)
-    fun res_9d(vararg args: Operand) = res_b_r(3, Reg8.L)
-    fun res_9e(vararg args: Operand) {
+    fun res_9f(vararg args: Int) = res_b_r(3, Reg8.A)
+    fun res_98(vararg args: Int) = res_b_r(3, Reg8.B)
+    fun res_99(vararg args: Int) = res_b_r(3, Reg8.C)
+    fun res_9a(vararg args: Int) = res_b_r(3, Reg8.D)
+    fun res_9b(vararg args: Int) = res_b_r(3, Reg8.E)
+    fun res_9c(vararg args: Int) = res_b_r(3, Reg8.H)
+    fun res_9d(vararg args: Int) = res_b_r(3, Reg8.L)
+    fun res_9e(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1541,14 +1510,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(3, value).toUnsignedInt())
     }
 
-    fun res_a7(vararg args: Operand) = res_b_r(4, Reg8.A)
-    fun res_a0(vararg args: Operand) = res_b_r(4, Reg8.B)
-    fun res_a1(vararg args: Operand) = res_b_r(4, Reg8.C)
-    fun res_a2(vararg args: Operand) = res_b_r(4, Reg8.D)
-    fun res_a3(vararg args: Operand) = res_b_r(4, Reg8.E)
-    fun res_a4(vararg args: Operand) = res_b_r(4, Reg8.H)
-    fun res_a5(vararg args: Operand) = res_b_r(4, Reg8.L)
-    fun res_a6(vararg args: Operand) {
+    fun res_a7(vararg args: Int) = res_b_r(4, Reg8.A)
+    fun res_a0(vararg args: Int) = res_b_r(4, Reg8.B)
+    fun res_a1(vararg args: Int) = res_b_r(4, Reg8.C)
+    fun res_a2(vararg args: Int) = res_b_r(4, Reg8.D)
+    fun res_a3(vararg args: Int) = res_b_r(4, Reg8.E)
+    fun res_a4(vararg args: Int) = res_b_r(4, Reg8.H)
+    fun res_a5(vararg args: Int) = res_b_r(4, Reg8.L)
+    fun res_a6(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1556,14 +1525,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(4, value).toUnsignedInt())
     }
 
-    fun res_af(vararg args: Operand) = res_b_r(5, Reg8.A)
-    fun res_a8(vararg args: Operand) = res_b_r(5, Reg8.B)
-    fun res_a9(vararg args: Operand) = res_b_r(5, Reg8.C)
-    fun res_aa(vararg args: Operand) = res_b_r(5, Reg8.D)
-    fun res_ab(vararg args: Operand) = res_b_r(5, Reg8.E)
-    fun res_ac(vararg args: Operand) = res_b_r(5, Reg8.H)
-    fun res_ad(vararg args: Operand) = res_b_r(5, Reg8.L)
-    fun res_ae(vararg args: Operand) {
+    fun res_af(vararg args: Int) = res_b_r(5, Reg8.A)
+    fun res_a8(vararg args: Int) = res_b_r(5, Reg8.B)
+    fun res_a9(vararg args: Int) = res_b_r(5, Reg8.C)
+    fun res_aa(vararg args: Int) = res_b_r(5, Reg8.D)
+    fun res_ab(vararg args: Int) = res_b_r(5, Reg8.E)
+    fun res_ac(vararg args: Int) = res_b_r(5, Reg8.H)
+    fun res_ad(vararg args: Int) = res_b_r(5, Reg8.L)
+    fun res_ae(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1571,14 +1540,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(5, value).toUnsignedInt())
     }
 
-    fun res_b7(vararg args: Operand) = res_b_r(6, Reg8.A)
-    fun res_b0(vararg args: Operand) = res_b_r(6, Reg8.B)
-    fun res_b1(vararg args: Operand) = res_b_r(6, Reg8.C)
-    fun res_b2(vararg args: Operand) = res_b_r(6, Reg8.D)
-    fun res_b3(vararg args: Operand) = res_b_r(6, Reg8.E)
-    fun res_b4(vararg args: Operand) = res_b_r(6, Reg8.H)
-    fun res_b5(vararg args: Operand) = res_b_r(6, Reg8.L)
-    fun res_b6(vararg args: Operand) {
+    fun res_b7(vararg args: Int) = res_b_r(6, Reg8.A)
+    fun res_b0(vararg args: Int) = res_b_r(6, Reg8.B)
+    fun res_b1(vararg args: Int) = res_b_r(6, Reg8.C)
+    fun res_b2(vararg args: Int) = res_b_r(6, Reg8.D)
+    fun res_b3(vararg args: Int) = res_b_r(6, Reg8.E)
+    fun res_b4(vararg args: Int) = res_b_r(6, Reg8.H)
+    fun res_b5(vararg args: Int) = res_b_r(6, Reg8.L)
+    fun res_b6(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1586,14 +1555,14 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(6, value).toUnsignedInt())
     }
 
-    fun res_bf(vararg args: Operand) = res_b_r(7, Reg8.A)
-    fun res_b8(vararg args: Operand) = res_b_r(7, Reg8.B)
-    fun res_b9(vararg args: Operand) = res_b_r(7, Reg8.C)
-    fun res_ba(vararg args: Operand) = res_b_r(7, Reg8.D)
-    fun res_bb(vararg args: Operand) = res_b_r(7, Reg8.E)
-    fun res_bc(vararg args: Operand) = res_b_r(7, Reg8.H)
-    fun res_bd(vararg args: Operand) = res_b_r(7, Reg8.L)
-    fun res_be(vararg args: Operand) {
+    fun res_bf(vararg args: Int) = res_b_r(7, Reg8.A)
+    fun res_b8(vararg args: Int) = res_b_r(7, Reg8.B)
+    fun res_b9(vararg args: Int) = res_b_r(7, Reg8.C)
+    fun res_ba(vararg args: Int) = res_b_r(7, Reg8.D)
+    fun res_bb(vararg args: Int) = res_b_r(7, Reg8.E)
+    fun res_bc(vararg args: Int) = res_b_r(7, Reg8.H)
+    fun res_bd(vararg args: Int) = res_b_r(7, Reg8.L)
+    fun res_be(vararg args: Int) {
         gb.io.tick(4)
         val addr = read(Reg16.HL)
         val value = mmu.get(addr).toByte()
@@ -1601,45 +1570,45 @@ class Cpu(private val gb: GameBoy) {
         mmu.set(addr, res_b_r(7, value).toUnsignedInt())
     }
 
-    fun jp_c3(vararg args: Operand) = jp_n(args[0].get())
+    fun jp_c3(vararg args: Int) = jp_n(args.toWord())
 
-    fun jp_c2(vararg args: Operand): Boolean = jp_c_n(Condition.NZ, args[0].get())
-    fun jp_ca(vararg args: Operand): Boolean = jp_c_n(Condition.Z, args[0].get())
-    fun jp_d2(vararg args: Operand): Boolean = jp_c_n(Condition.NC, args[0].get())
-    fun jp_da(vararg args: Operand): Boolean = jp_c_n(Condition.C, args[0].get())
+    fun jp_c2(vararg args: Int): Boolean = jp_c_n(Condition.NZ, args.toWord())
+    fun jp_ca(vararg args: Int): Boolean = jp_c_n(Condition.Z, args.toWord())
+    fun jp_d2(vararg args: Int): Boolean = jp_c_n(Condition.NC, args.toWord())
+    fun jp_da(vararg args: Int): Boolean = jp_c_n(Condition.C, args.toWord())
 
-    fun jp_e9(vararg args: Operand) = jp_n(read(Reg16.HL))
+    fun jp_e9(vararg args: Int) = jp_n(read(Reg16.HL))
 
-    fun jr_18(vararg args: Operand) = jr_n(args[0])
+    fun jr_18(vararg args: Int) = jr_n(args[0].toByte())
 
-    fun jr_20(vararg args: Operand): Boolean = jr_c_n(Condition.NZ, args[0])
-    fun jr_28(vararg args: Operand): Boolean = jr_c_n(Condition.Z, args[0])
-    fun jr_30(vararg args: Operand): Boolean = jr_c_n(Condition.NC, args[0])
-    fun jr_38(vararg args: Operand): Boolean = jr_c_n(Condition.C, args[0])
+    fun jr_20(vararg args: Int): Boolean = jr_c_n(Condition.NZ, args[0].toByte())
+    fun jr_28(vararg args: Int): Boolean = jr_c_n(Condition.Z, args[0].toByte())
+    fun jr_30(vararg args: Int): Boolean = jr_c_n(Condition.NC, args[0].toByte())
+    fun jr_38(vararg args: Int): Boolean = jr_c_n(Condition.C, args[0].toByte())
 
-    fun call_cd(vararg args: Operand) = call_n(args[0].get())
+    fun call_cd(vararg args: Int) = call_n(args.toWord())
 
-    fun call_c4(vararg args: Operand): Boolean = call_c_n(Condition.NZ, args[0].get())
-    fun call_cc(vararg args: Operand): Boolean = call_c_n(Condition.Z, args[0].get())
-    fun call_d4(vararg args: Operand): Boolean = call_c_n(Condition.NC, args[0].get())
-    fun call_dc(vararg args: Operand): Boolean = call_c_n(Condition.C, args[0].get())
+    fun call_c4(vararg args: Int): Boolean = call_c_n(Condition.NZ, args.toWord())
+    fun call_cc(vararg args: Int): Boolean = call_c_n(Condition.Z, args.toWord())
+    fun call_d4(vararg args: Int): Boolean = call_c_n(Condition.NC, args.toWord())
+    fun call_dc(vararg args: Int): Boolean = call_c_n(Condition.C, args.toWord())
 
-    fun rst_c7(vararg args: Operand) = rst_n(0x00)
-    fun rst_cf(vararg args: Operand) = rst_n(0x08)
-    fun rst_d7(vararg args: Operand) = rst_n(0x10)
-    fun rst_df(vararg args: Operand) = rst_n(0x18)
-    fun rst_e7(vararg args: Operand) = rst_n(0x20)
-    fun rst_ef(vararg args: Operand) = rst_n(0x28)
-    fun rst_f7(vararg args: Operand) = rst_n(0x30)
-    fun rst_ff(vararg args: Operand) = rst_n(0x38)
+    fun rst_c7(vararg args: Int) = rst_n(0x00)
+    fun rst_cf(vararg args: Int) = rst_n(0x08)
+    fun rst_d7(vararg args: Int) = rst_n(0x10)
+    fun rst_df(vararg args: Int) = rst_n(0x18)
+    fun rst_e7(vararg args: Int) = rst_n(0x20)
+    fun rst_ef(vararg args: Int) = rst_n(0x28)
+    fun rst_f7(vararg args: Int) = rst_n(0x30)
+    fun rst_ff(vararg args: Int) = rst_n(0x38)
 
-    fun ret_c9(vararg args: Operand) = ret()
+    fun ret_c9(vararg args: Int) = ret()
 
-    fun ret_c0(vararg args: Operand): Boolean = ret_c(Condition.NZ)
-    fun ret_c8(vararg args: Operand): Boolean = ret_c(Condition.Z)
-    fun ret_d0(vararg args: Operand): Boolean = ret_c(Condition.NC)
-    fun ret_d8(vararg args: Operand): Boolean = ret_c(Condition.C)
+    fun ret_c0(vararg args: Int): Boolean = ret_c(Condition.NZ)
+    fun ret_c8(vararg args: Int): Boolean = ret_c(Condition.Z)
+    fun ret_d0(vararg args: Int): Boolean = ret_c(Condition.NC)
+    fun ret_d8(vararg args: Int): Boolean = ret_c(Condition.C)
 
-    fun reti_d9(vararg args: Operand) = reti()
+    fun reti_d9(vararg args: Int) = reti()
 
 }

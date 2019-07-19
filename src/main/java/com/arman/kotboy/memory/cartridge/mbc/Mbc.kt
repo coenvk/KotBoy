@@ -8,9 +8,12 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null) : Mem
 
     protected var romBank: Int = 1
     protected var ramBank: Int = 0
-    protected var ramEnabled: Boolean = true
 
-    private fun getRamBank(address: Int): Int {
+    init {
+        load()
+    }
+
+    private fun translate(address: Int): Int {
         if (ram == null || ram.size() <= 0) {
             return -1
         }
@@ -19,7 +22,7 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null) : Mem
 
     private fun ramAccessible(bank: Int): Boolean {
         if (ram == null) return false
-        return ramEnabled && ram.size() > 0 && bank < ram.size()
+        return ram.size() > 0 && bank < ram.size()
     }
 
     protected abstract fun write(address: Int, value: Int): Boolean
@@ -28,15 +31,30 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null) : Mem
         return address in 0x0..0x7fff || address in 0xa000..0xbfff
     }
 
+    fun save() {
+        this.ram?.let {
+//            file.writeBytes(it.toBytes())
+        }
+    }
+
+    fun load() {
+        this.ram?.let {
+//            val buffer = file.readBytes()
+//            for (i in 0 until min(buffer.size, it.size())) {
+//                it[i] = buffer[i].toUnsignedInt()
+//            }
+        }
+    }
+
     override fun get(address: Int): Int {
         return when (address) {
             in 0x0..0x3fff -> rom[address]
             in 0x4000..0x7fff -> rom[((address - 0x4000) + (romBank * 0x4000)).rem(rom.size())]
             in 0xa000..0xbfff -> {
-                val i = getRamBank(address)
+                val i = translate(address)
                 if (i > -1 && ramAccessible(i)) {
-                    if (ram == null) return 0xff
-                    ram[i]
+                    return if (ram == null) 0xff
+                    else ram[i + 0xA000]
                 } else 0xff
             }
             else -> 0xff
@@ -47,11 +65,9 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null) : Mem
         return when (address) {
             in 0x0..0x7fff -> write(address, value)
             in 0xa000..0xbfff -> {
-                val i = getRamBank(address)
+                val i = translate(address)
                 if (i > -1 && ramAccessible(i)) {
-                    if (ram == null) return false
-                    ram[i] = value
-                    return true
+                    return ram?.set(i + 0xA000, value) ?: false
                 }
                 false
             }
@@ -74,6 +90,10 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null) : Mem
 
     override fun clear() {
         this.ram?.clear()
+    }
+
+    override fun toString(): String {
+        return this.rom.toString() + this.ram.toString()
     }
 
 }

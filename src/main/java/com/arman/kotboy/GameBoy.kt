@@ -1,6 +1,7 @@
 package com.arman.kotboy
 
 import com.arman.kotboy.cpu.Cpu
+import com.arman.kotboy.cpu.Reg8
 import com.arman.kotboy.gpu.Gpu
 import com.arman.kotboy.gui.Display
 import com.arman.kotboy.io.Io
@@ -67,6 +68,10 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
         this.cpu.reset()
         this.io.reset()
         this.gpu.reset()
+
+        if (cart.isCgb()) {
+            this.cpu.write(Reg8.A, 0x11)
+        }
     }
 
     override fun run() {

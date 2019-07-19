@@ -1,27 +1,8 @@
 package com.arman.kotboy.cpu
 
-import com.arman.kotboy.cpu.util.contentToHexString
 import com.arman.kotboy.cpu.util.hexString
 
-class Instr(val opCode: OpCode, vararg args: Int) : Iterable<Instr> {
-
-    private val args: Array<Operand> by lazy {
-        assert(opCode.argsSize() == args.size)
-        val res: MutableList<Operand> = ArrayList()
-        var i = 0
-        val it = opCode.args.iterator()
-        while (i < args.size) {
-            val arg = args[i]
-            val operand = when (it.next()) {
-                Operand.Type.d8, Operand.Type.a8 -> Immediate8(arg)
-                Operand.Type.d16, Operand.Type.a16 -> Immediate16(args[++i], arg)
-                else -> Signed8(arg) // Operand.Type.r8
-            }
-            res.add(operand)
-            i++
-        }
-        res.toTypedArray()
-    }
+class Instr(val opCode: OpCode, private vararg val args: Int) : Iterable<Instr> {
 
     var comment: String? = null
 
@@ -35,7 +16,7 @@ class Instr(val opCode: OpCode, vararg args: Int) : Iterable<Instr> {
 
     fun prettryPrint(): String {
         var res = "$opCode\t"
-        for (arg in args) res += "${arg.get().hexString()} "
+        for (arg in args) res += "${arg.hexString()} "
         this.comment?.let { res += "\t\t// $comment" }
         return res
     }
