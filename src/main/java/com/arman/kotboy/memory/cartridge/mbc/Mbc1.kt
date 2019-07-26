@@ -2,8 +2,9 @@ package com.arman.kotboy.memory.cartridge.mbc
 
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
+import java.io.File
 
-class Mbc1(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
+class Mbc1(rom: Rom, ram: Ram? = null, saveFile: File? = null) : Mbc(rom, ram, saveFile) {
 
     private var romMode: Boolean = true
 

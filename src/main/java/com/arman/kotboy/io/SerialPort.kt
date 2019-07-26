@@ -1,6 +1,6 @@
 package com.arman.kotboy.io
 
-class SerialPort : IoDevice(IoReg.SB.address, IoReg.SC.address) {
+class SerialPort : IoDevice(IoReg.SB.address, IoReg.SC.address) { // TODO: cgb
 
     private val update: Int = 512
 

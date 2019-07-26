@@ -15,7 +15,7 @@ class Io(private val gb: GameBoy) : Memory {
         put(Div()) // 0xFF04
         put(Timer()) // 0xFF05 - 0xFF07
         put(If()) // 0xFF0F
-        put(Lcd(gb)) // 0xFF40 - 0xFF4B
+        put(Ppu(gb)) // 0xFF40 - 0xFF4B (CBB: 0xFF40 - 0xFF6B)
         put(Ie()) // 0xFFFF
     }
 
@@ -41,7 +41,7 @@ class Io(private val gb: GameBoy) : Memory {
                 if (device.tick(cycles)) {
                     gb.cpu.interrupt(Interrupt.Timer)
                 }
-            } else if (device is Lcd) {
+            } else if (device is Ppu) {
                 if (device.isLcdEnabled()) {
                     var c = cycles
                     while (c-- > 0) {

@@ -1,9 +1,9 @@
 package com.arman.kotboy.memory
 
-class InvalidRegion(private val value: Int, startAddress: Int, endAddress: Int) : AddressSpace(startAddress, endAddress) {
+class InvalidRegion(startAddress: Int, endAddress: Int) : AddressSpace(startAddress, endAddress) {
 
     override fun get(address: Int): Int {
-        return value
+        return 0xFF
     }
 
     override fun set(address: Int, value: Int): Boolean {

@@ -16,8 +16,8 @@ class Gpu(private val gb: GameBoy) : Memory {
         const val WINDOW_TILE_TABLE_1 = 0x9C00
     }
 
-    val vram: AddressSpace = Vram()
-    val oam: AddressSpace = Oam()
+    val vram: Ram = Vram()
+    val oam: Oam = Oam()
 
     override fun accepts(address: Int): Boolean {
         return this.vram.accepts(address) || this.oam.accepts(address)

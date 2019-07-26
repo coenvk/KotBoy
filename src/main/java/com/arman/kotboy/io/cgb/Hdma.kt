@@ -7,57 +7,71 @@ class Hdma(private val gb: GameBoy) : IoDevice(CgbReg.HDMA1.address, CgbReg.HDMA
 
     var hdma1: Int
         get() {
-            return this[CgbReg.HDMA1.address]
+            return super.get(CgbReg.HDMA1.address)
         }
         set(value) {
-            this[CgbReg.HDMA1.address] = value
+            super.set(CgbReg.HDMA1.address, value)
         }
     var hdma2: Int
         get() {
-            return this[CgbReg.HDMA2.address]
+            return super.get(CgbReg.HDMA2.address)
         }
         set(value) {
-            this[CgbReg.HDMA2.address] = value
+            super.set(CgbReg.HDMA2.address, value)
         }
     var hdma3: Int
         get() {
-            return this[CgbReg.HDMA3.address]
+            return super.get(CgbReg.HDMA3.address)
         }
         set(value) {
-            this[CgbReg.HDMA3.address] = value
+            super.set(CgbReg.HDMA3.address, value)
         }
     var hdma4: Int
         get() {
-            return this[CgbReg.HDMA4.address]
+            return super.get(CgbReg.HDMA4.address)
         }
         set(value) {
-            this[CgbReg.HDMA4.address] = value
+            super.set(CgbReg.HDMA4.address, value)
         }
     var hdma5: Int
         get() {
-            return this[CgbReg.HDMA5.address]
+            return super.get(CgbReg.HDMA5.address)
         }
         set(value) {
-            this[CgbReg.HDMA5.address] = value
+            super.set(CgbReg.HDMA5.address, value)
         }
+
+    private fun getSource(): Int {
+        return (this.hdma1 shl 8) or (this.hdma2 and 0xF0)
+    }
+
+    private fun getDestination(): Int {
+        return (((this.hdma3 and 0x1F) shl 8) or (this.hdma4 and 0xF0)) or 0x8000
+    }
+
+    private fun getLength(): Int {
+        return ((this.hdma5 and 0x7F) + 1) * 0x10
+    }
+
+    private fun getMode(): Int { // TODO: differentiate between mode 0 and mode 1 (HBlank)
+        return this.hdma5 and 0x80
+    }
 
     override fun set(address: Int, value: Int): Boolean {
         if (address == CgbReg.HDMA5.address) {
-            val len = value and 0x7F
-            val mode = value and 0x80
-            val src = (get(CgbReg.HDMA1.address) shl 8) or (get(CgbReg.HDMA2.address) and 0xF0)
-            val dst = ((get(CgbReg.HDMA3.address) and 0x9F) shl 8) or (get(CgbReg.HDMA4.address) and 0xF0)
-            transfer(src, dst, len)
+            super.set(address, value)
+            transfer()
             super.set(address, 0xFF)
         }
         return super.set(address, value)
     }
 
-    private fun transfer(src: Int, dst: Int, len: Int) {
-        for (i in len..0 step -1) {
-            for (j in 0 until 0x10) {
-                this.gb.mmu[dst + i * 0x10 + j] = this.gb.mmu[src + i * 0x10 + j]
-            }
+    private fun transfer() {
+        val src = getSource()
+        val dst = getDestination()
+        val len = getLength()
+        for (j in 0 until len) {
+            this.gb.mmu[dst + j] = this.gb.mmu[src + j]
         }
     }
 

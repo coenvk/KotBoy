@@ -11,7 +11,7 @@ enum class RamSize(val index: Int, val banks: Int) {
     KB_128(0x04, 16);
 
     fun size(): Int {
-        return (4.0.pow(index) / 2).toInt() * 1024
+        return (4f.pow(index) / 2).toInt() * 1024
     }
 
     companion object {

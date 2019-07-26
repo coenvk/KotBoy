@@ -5,6 +5,8 @@ open class Ram : AddressSpace {
     constructor(startAddress: Int, values: IntArray) : super(startAddress, values)
     constructor(startAddress: Int, endAddress: Int) : super(startAddress, endAddress)
 
+    open operator fun get(address: Int, bank: Int): Int = this[address]
+
 }
 
 class Vram : Ram(0x8000, 0x9FFF)

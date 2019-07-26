@@ -22,7 +22,7 @@ class KotBoy {
     init {
         this.fileChooser.dialogTitle = "Select a ROM file"
         this.fileChooser.isAcceptAllFileFilterUsed = false
-        val filter = FileNameExtensionFilter("ROM files", "gb", "zip")
+        val filter = FileNameExtensionFilter("ROM files", "gb", "gbc", "rom", "zip")
         this.fileChooser.addChoosableFileFilter(filter)
     }
 

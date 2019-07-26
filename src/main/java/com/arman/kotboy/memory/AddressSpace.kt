@@ -1,8 +1,6 @@
 package com.arman.kotboy.memory
 
 import com.arman.kotboy.cpu.util.hexString
-import java.io.InputStream
-import java.io.OutputStream
 
 abstract class AddressSpace(protected val startAddress: Int, protected val values: IntArray) : Memory {
 
@@ -41,14 +39,6 @@ abstract class AddressSpace(protected val startAddress: Int, protected val value
         return if (accepts(address) && enabled) {
             this.values[address - this.startAddress]
         } else 0xFF
-    }
-
-    fun get(startAddress: Int, endAddress: Int): IntArray? {
-        return if (accepts(startAddress) && accepts(endAddress)) {
-            val sa = startAddress - this.startAddress
-            val ea = endAddress - this.startAddress
-            this.values.sliceArray(sa..ea)
-        } else null
     }
 
     fun toBytes(): ByteArray {

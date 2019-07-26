@@ -1,6 +1,5 @@
 package com.arman.kotboy.debug
 
-import com.arman.kotboy.RomReader
 import com.arman.kotboy.cpu.Instr
 import com.arman.kotboy.cpu.OpCode
 import com.arman.kotboy.cpu.util.hexString
@@ -8,7 +7,8 @@ import com.arman.kotboy.memory.cartridge.Cartridge
 
 class Disassembler {
 
-    private val cart: Cartridge = Cartridge(*RomReader("blargg\\01-special.gb").read())
+    private val cart: Cartridge =
+        Cartridge("C:\\Users\\Coen\\IdeaProjects\\KotBoy\\src\\test\\resources\\roms\\animaniacs.gb")
 
     private var PC: Int = 0
 

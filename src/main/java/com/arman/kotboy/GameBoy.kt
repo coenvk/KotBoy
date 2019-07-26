@@ -69,17 +69,19 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
         this.io.reset()
         this.gpu.reset()
 
-        if (cart.isCgb()) {
-            this.cpu.write(Reg8.A, 0x11)
-        }
+//        if (cart.isCgb()) {
+//            this.cpu.write(Reg8.A, 0x11)
+//        }
     }
 
     override fun run() {
         if (!options.bootstrap) {
             this.reset()
         }
+
         this.running = true
         while (this.running) {
+
             if (this.paused) {
                 lock.withLock {
                     while (this.paused) {
@@ -87,11 +89,12 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
                     }
                 }
             }
+
             if (!stopped) {
                 val start = System.currentTimeMillis()
                 val timeBetweenFrames = 1000 / Cpu.FRAME_RATE
                 var cycle = 0
-                while (cycle < Cpu.CYCLES_PER_FRAME) {
+                while (cycle < Cpu.DMG_CLOCK_SPEED / Cpu.FRAME_RATE) {
                     cycle += tick()
                 }
                 val frameTime = System.currentTimeMillis() - start
@@ -100,6 +103,7 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
                     Thread.sleep(sleepTime)
                 }
             }
+
         }
     }
 

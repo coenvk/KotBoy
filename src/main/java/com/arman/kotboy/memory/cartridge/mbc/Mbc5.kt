@@ -3,8 +3,9 @@ package com.arman.kotboy.memory.cartridge.mbc
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
+import java.io.File
 
-class Mbc5(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
+class Mbc5(rom: Rom, ram: Ram? = null, saveFile: File? = null) : Mbc(rom, ram, saveFile) {
 
     override fun write(address: Int, value: Int): Boolean {
         when (address) {

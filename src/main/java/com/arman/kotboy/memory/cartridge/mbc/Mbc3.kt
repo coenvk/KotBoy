@@ -2,8 +2,9 @@ package com.arman.kotboy.memory.cartridge.mbc
 
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
+import java.io.File
 
-class Mbc3(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
+class Mbc3(rom: Rom, ram: Ram? = null, saveFile: File? = null) : Mbc(rom, ram, saveFile) {
 
     // TODO: RTC
 
@@ -24,7 +25,8 @@ class Mbc3(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
                 // TODO: Map corresponding RTC register into memory
             }
             in 0x6000..0x7fff -> {
-                /* TODO: When writing 00h, and then 01h to this register, the current
+                /* TODO:
+                   When writing 00h, and then 01h to this register, the current
                    time becomes latched into the RTC registers
                    08h  RTC S   Seconds   0-59 (0-3Bh)
                    09h  RTC M   Minutes   0-59 (0-3Bh)

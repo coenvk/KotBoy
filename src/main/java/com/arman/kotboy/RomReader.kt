@@ -19,7 +19,7 @@ class RomReader(private val file: File) {
         } else false
     }
 
-    fun read(input: InputStream, size: Int): IntArray {
+    private fun read(input: InputStream, size: Int): IntArray {
         val bytes = input.readBytes()
         val ints = IntArray(size)
         for (i in ints.indices) {

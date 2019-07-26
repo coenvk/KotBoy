@@ -2,28 +2,28 @@ package com.arman.kotboy.io
 
 import com.arman.kotboy.cpu.util.toUnsignedInt
 
-class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) {
+class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) { // TODO: cgb double speed mode
 
     var tima: Int
         get() {
-            return this[IoReg.TIMA.address]
+            return super.get(IoReg.TIMA.address)
         }
         set(value) {
-            this[IoReg.TIMA.address] = value
+            super.set(IoReg.TIMA.address, value)
         }
     var tma: Int
         get() {
-            return this[IoReg.TMA.address]
+            return super.get(IoReg.TMA.address)
         }
         set(value) {
-            this[IoReg.TMA.address] = value
+            super.set(IoReg.TMA.address, value)
         }
     var tac: Int
         get() {
-            return this[IoReg.TAC.address]
+            return super.get(IoReg.TAC.address)
         }
         set(value) {
-            this[IoReg.TAC.address] = value
+            super.set(IoReg.TAC.address, value)
         }
 
     companion object {
@@ -35,20 +35,20 @@ class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) {
         super.tick(cycles)
 
         val freq = freqs[tac and 0b11]
-        super.set(IoReg.TIMA.address, this.tima + this.cycles / freq)
+        this.tima = this.tima + this.cycles / freq
         this.cycles = this.cycles.rem(freq)
 
         return if (tima > 0xFF) {
-            super.set(IoReg.TIMA.address, tma)
+            this.tima = this.tma
             true
         } else false
     }
 
     override fun reset() {
         super.reset()
-        super.set(IoReg.TIMA.address, 0x00)
-        super.set(IoReg.TMA.address, 0x00)
-        super.set(IoReg.TAC.address, 0xF8)
+        this.tima = 0x00
+        this.tma = 0x00
+        this.tac = 0xF8
     }
 
     override fun set(address: Int, value: Int): Boolean {
@@ -60,5 +60,5 @@ class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) {
         }
         return super.set(address, v)
     }
-    
+
 }

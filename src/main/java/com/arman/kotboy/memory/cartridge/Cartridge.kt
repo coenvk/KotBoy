@@ -6,50 +6,35 @@ import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.memory.*
 import com.arman.kotboy.memory.cartridge.mbc.*
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import kotlin.system.exitProcess
 
-class Cartridge(vararg values: Int, private var bootstrap: Boolean = false) : Memory {
+class Cartridge(private val options: Options) : Memory {
 
-    constructor(file: String, bootstrap: Boolean) : this(*RomReader(file).read(), bootstrap = bootstrap)
-    constructor(options: Options) : this(options.file.absolutePath, options.bootstrap)
+    constructor(file: File) : this(Options(file))
+    constructor(filename: String) : this(File(filename))
 
-    private val type: CartridgeType by lazy {
-        CartridgeType[values[MemoryMap.CARTRIDGE_TYPE.startAddress]]
-    }
+    private val type: CartridgeType
+    private val colorMode: ColorMode
+    private val sgbIndicator: Boolean
+    private val romSize: RomSize
+    private val ramSize: RamSize
+    private val destinationCode: DestinationCode
+    private val manufacturerCode: String
+    private val licenseeCode: String
+    private val versionNumber: Int
+    private val headerChecksum: Int
+    private val globalChecksum: Int
 
     val title: String
 
-    val colorMode: ColorMode by lazy {
-        when (values[MemoryMap.CGB.startAddress]) {
-            0x80, 0xC0 -> {
-                ColorMode.CGB
-            }
-            else /* 0x00 */ -> {
-                ColorMode.DMG
-            }
-        }
-    }
-
-    val sgbIndicator: Boolean by lazy {
-        values[MemoryMap.SGB.startAddress] == 3
-    }
-
-    val romSize: RomSize by lazy {
-        RomSize[values[MemoryMap.ROM_SIZE.startAddress].toUnsignedInt()]
-    }
-
-    val ramSize: RamSize by lazy {
-        RamSize[values[MemoryMap.RAM_SIZE.startAddress]]
-    }
-
-    val destinationCode: DestinationCode by lazy {
-        DestinationCode.values()[values[MemoryMap.DESTINATION_CODE.startAddress]]
-    }
-
     private val mbc: Mbc
 
+    private var bootstrap: Boolean = options.bootstrap
+
     init {
+        val values = RomReader(options.file).read()
+        this.type = CartridgeType[values[MemoryMap.CARTRIDGE_TYPE.startAddress]]
+
         val sb = StringBuilder()
         for (i in MemoryMap.GAME_TITLE.startAddress..MemoryMap.GAME_TITLE.endAddress) {
             val c = values[i]
@@ -60,19 +45,83 @@ class Cartridge(vararg values: Int, private var bootstrap: Boolean = false) : Me
         }
         this.title = sb.toString()
 
+        sb.clear()
+        for (i in MemoryMap.MANUFACTURER_CODE.startAddress..MemoryMap.MANUFACTURER_CODE.endAddress) {
+            val c = values[i]
+            sb.append(c.toChar())
+        }
+        this.manufacturerCode = sb.toString()
+
+        val oldLicenseeCode = values[MemoryMap.OLD_LICENSEE_CODE.startAddress]
+        this.licenseeCode = if (oldLicenseeCode == 0x33) {
+            sb.clear()
+            for (i in MemoryMap.NEW_LICENSEE_CODE.startAddress..MemoryMap.NEW_LICENSEE_CODE.endAddress) {
+                val c = values[i]
+                sb.append(c.toChar())
+            }
+            sb.toString()
+        } else oldLicenseeCode.toChar().toString()
+
+        this.colorMode = when (values[MemoryMap.CGB_FLAG.startAddress]) {
+            0x80, 0xC0 -> {
+                ColorMode.CGB
+            }
+            else /* 0x00 */ -> {
+                ColorMode.DMG
+            }
+        }
+
+        this.sgbIndicator = values[MemoryMap.SGB_FLAG.startAddress] == 3
+
+        this.romSize = RomSize[values[MemoryMap.ROM_SIZE.startAddress].toUnsignedInt()]
+        this.ramSize = RamSize[values[MemoryMap.RAM_SIZE.startAddress]]
+
+        this.destinationCode = DestinationCode.values()[values[MemoryMap.DESTINATION_CODE.startAddress]]
+
+        this.versionNumber = values[MemoryMap.MASK_ROM_VERSION_NUMBER.startAddress]
+
+        this.headerChecksum = values[MemoryMap.HEADER_CHECKSUM.startAddress]
+        this.globalChecksum =
+            (values[MemoryMap.GLOBAL_CHECKSUM.startAddress] shl 8) or values[MemoryMap.GLOBAL_CHECKSUM.endAddress]
+
+        if (!this.verifyChecksum(values) || !this.verifyNintentoLogo(values)) { // TODO: stop / lock gameboy
+            exitProcess(-1)
+        }
+
         val ram =
             if (ramSize.size() > 0) {
                 Ram(0xA000, 0xA000 + ramSize.size())
             } else null
         val rom = Rom(0x0, values.slice(IntRange(0x0, romSize.size() - 1)).toIntArray())
 
+        val saveFile = if (type.battery) {
+            File("${options.file.parent}\\${options.file.nameWithoutExtension}.sav")
+        } else null
+
         this.mbc = when (type.kind) {
-            CartridgeType.Kind.MBC1 -> Mbc1(rom, ram)
-            CartridgeType.Kind.MBC2 -> Mbc2(rom, ram)
-            CartridgeType.Kind.MBC3 -> Mbc3(rom, ram)
-            CartridgeType.Kind.MBC5 -> Mbc5(rom, ram)
+            CartridgeType.Kind.MBC1 -> Mbc1(rom, ram, saveFile)
+            CartridgeType.Kind.MBC2 -> Mbc2(rom, ram, saveFile)
+            CartridgeType.Kind.MBC3 -> Mbc3(rom, ram, saveFile)
+            CartridgeType.Kind.MBC5 -> Mbc5(rom, ram, saveFile)
             else -> RomOnly(rom, ram)
         }
+
+        this.mbc.load()
+    }
+
+    private fun verifyChecksum(values: IntArray): Boolean {
+        var x = 0
+        for (i in 0x0134..0x014C) {
+            x = x - values[i] - 1
+        }
+        return x.toUnsignedInt() == this.headerChecksum.toUnsignedInt()
+    }
+
+    private fun verifyNintentoLogo(values: IntArray): Boolean {
+        for (i in 0x00 until 0x30) {
+            if (MemoryMap.NINTENDO_LOGO[i] != values[MemoryMap.NINTENDO_LOGO.startAddress + i]) return false
+        }
+        return true
     }
 
     override fun set(address: Int, value: Int): Boolean {

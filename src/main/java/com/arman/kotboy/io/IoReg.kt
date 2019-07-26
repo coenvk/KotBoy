@@ -31,7 +31,6 @@ enum class IoReg(val address: Int) {
     NR_50(0xFF24),
     NR_51(0xFF25),
     NR_52(0xFF26),
-    WAVE_PATTERN_RAM(0xFF30),
     LCDC(0xFF40),
     STAT(0xFF41),
     SCY(0xFF42),

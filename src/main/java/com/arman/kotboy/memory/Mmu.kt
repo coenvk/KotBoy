@@ -1,7 +1,8 @@
 package com.arman.kotboy.memory
 
 import com.arman.kotboy.GameBoy
-import com.arman.kotboy.cpu.util.hexString
+import com.arman.kotboy.io.cgb.Hdma
+import com.arman.kotboy.io.cgb.UndocumentedSpace
 
 class Mmu(private val gb: GameBoy) : Memory {
 
@@ -10,11 +11,17 @@ class Mmu(private val gb: GameBoy) : Memory {
     init {
         this.put(gb.gpu) // 0x8000 - 0x9FFF, 0xFE00 - 0xFE9F
         this.put(gb.io) // 0xFF00 - 0xFF4B, 0xFFFF
+
         this.put(Wram()) // 0xC000 - 0xDFFF (echo 0xE000 - 0xFDFF)
+
         this.put(Hram()) // 0xFF80 - 0xFFFE
         this.put(gb.cart) // 0x0000 - 0x7FFF, 0xA000 - 0xBFFF
-        this.put(InvalidRegion(0x00, 0xFEA0, 0xFEFF)) // 0xFEA0 - 0xFEFF
-        this.put(InvalidRegion(0xFF, 0xFF4C, 0xFF7F)) // 0xFF4C - 0xFF7F
+
+        this.put(Hdma(gb))
+        this.put(UndocumentedSpace())
+
+        this.put(InvalidRegion(0xFEA0, 0xFEFF)) // 0xFEA0 - 0xFEFF
+        this.put(InvalidRegion(0xFF4C, 0xFF7F)) // 0xFF4C - 0xFF7F
     }
 
     override fun get(address: Int): Int {
