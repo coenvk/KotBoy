@@ -91,6 +91,15 @@ class SoundChannel1 : SoundChannel(IoReg.NR_10.address, IoReg.NR_14.address) {
             super.set(IoReg.NR_14.address, value)
         }
 
+    override fun reset() {
+        super.reset()
+        this.nr10 = 0x80
+        this.nr11 = 0xBF
+        this.nr12 = 0xF3
+        this.nr13 = 0x00
+        this.nr14 = 0xBF
+    }
+
     private fun getSweepTime(): Int {
         return ((this.nr10 shr 4) and 0x7) / 128
     }

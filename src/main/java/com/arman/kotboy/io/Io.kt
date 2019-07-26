@@ -31,6 +31,8 @@ class Io(private val gb: GameBoy) : Memory {
     override fun reset() {
         this.cycles = 0
         this.addressSpaces.forEach { it.reset() }
+
+
     }
 
     fun tick(cycles: Int) {

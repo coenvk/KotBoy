@@ -30,14 +30,14 @@ class DmgPalette : Palette(IoReg.BGP.address, IoReg.OBP1.address) {
             return super.get(IoReg.OBP0.address)
         }
         set(value) {
-            super.set(IoReg.OBP0.address, value)
+            super.set(IoReg.OBP0.address, value and 0xFC)
         }
     var obp1: Int
         get() {
             return super.get(IoReg.OBP1.address)
         }
         set(value) {
-            super.set(IoReg.OBP1.address, value)
+            super.set(IoReg.OBP1.address, value and 0xFC)
         }
 
     override fun bgp(color: Int, index: Int): Int {

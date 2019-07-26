@@ -48,7 +48,7 @@ class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) { // TODO: cgb dou
         super.reset()
         this.tima = 0x00
         this.tma = 0x00
-        this.tac = 0xF8
+        this.tac = 0xF8 // or 0x00
     }
 
     override fun set(address: Int, value: Int): Boolean {

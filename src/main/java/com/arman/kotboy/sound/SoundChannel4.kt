@@ -33,4 +33,12 @@ class SoundChannel4 : SoundChannel(IoReg.NR_41.address, IoReg.NR_44.address) {
             super.set(IoReg.NR_44.address, value)
         }
 
+    override fun reset() {
+        super.reset()
+        this.nr41 = 0xFF
+        this.nr42 = 0x00
+        this.nr43 = 0x00
+        this.nr44 = 0xBF
+    }
+
 }

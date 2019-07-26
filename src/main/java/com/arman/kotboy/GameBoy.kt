@@ -1,7 +1,6 @@
 package com.arman.kotboy
 
 import com.arman.kotboy.cpu.Cpu
-import com.arman.kotboy.cpu.Reg8
 import com.arman.kotboy.gpu.Gpu
 import com.arman.kotboy.gui.Display
 import com.arman.kotboy.io.Io
@@ -79,6 +78,12 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
             this.reset()
         }
 
+        val clockSpeed = if (cart.isSgb()) {
+            Cpu.SGB_CLOCK_SPEED
+        } else Cpu.DMG_CLOCK_SPEED
+        val cyclesPerFrame = clockSpeed / Cpu.FRAME_RATE
+        val timeBetweenFrames = 1000 / Cpu.FRAME_RATE
+
         this.running = true
         while (this.running) {
 
@@ -92,9 +97,8 @@ class GameBoy(private val options: Options, val display: Display, val inputHandl
 
             if (!stopped) {
                 val start = System.currentTimeMillis()
-                val timeBetweenFrames = 1000 / Cpu.FRAME_RATE
                 var cycle = 0
-                while (cycle < Cpu.DMG_CLOCK_SPEED / Cpu.FRAME_RATE) {
+                while (cycle < cyclesPerFrame) {
                     cycle += tick()
                 }
                 val frameTime = System.currentTimeMillis() - start

@@ -71,7 +71,7 @@ class Cartridge(private val options: Options) : Memory {
             }
         }
 
-        this.sgbIndicator = values[MemoryMap.SGB_FLAG.startAddress] == 3
+        this.sgbIndicator = values[MemoryMap.SGB_FLAG.startAddress] == 0x03 && oldLicenseeCode == 0x33
 
         this.romSize = RomSize[values[MemoryMap.ROM_SIZE.startAddress].toUnsignedInt()]
         this.ramSize = RamSize[values[MemoryMap.RAM_SIZE.startAddress]]
@@ -154,6 +154,10 @@ class Cartridge(private val options: Options) : Memory {
 
     fun isCgb(): Boolean {
         return this.colorMode == ColorMode.CGB
+    }
+
+    fun isSgb(): Boolean {
+        return this.sgbIndicator
     }
 
     override fun toString(): String = this.mbc.toString()
