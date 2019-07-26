@@ -2,11 +2,11 @@ package com.arman.kotboy
 
 import com.arman.kotboy.gui.LcdDisplay
 import com.arman.kotboy.io.input.Keyboard
-import java.io.File
 import javax.swing.*
 import javax.swing.event.MenuEvent
 import javax.swing.event.MenuListener
 import javax.swing.filechooser.FileNameExtensionFilter
+import kotlin.system.exitProcess
 
 class KotBoy {
 
@@ -80,8 +80,15 @@ class KotBoy {
                     this@KotBoy.gb?.paused = false
                 }
             }
+            val exitItem = JMenuItem("Exit")
+            exitItem.accelerator = KeyStroke.getKeyStroke("control shift Q")
+            exitItem.addActionListener {
+                exitProcess(0)
+            }
 
             fileMenu.add(loadRomItem)
+            fileMenu.addSeparator()
+            fileMenu.add(exitItem)
             menuBar.add(fileMenu)
             win.jMenuBar = menuBar
 

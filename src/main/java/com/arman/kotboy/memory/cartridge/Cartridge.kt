@@ -4,6 +4,7 @@ import com.arman.kotboy.Options
 import com.arman.kotboy.RomReader
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.memory.*
+import com.arman.kotboy.memory.cartridge.battery.Battery
 import com.arman.kotboy.memory.cartridge.mbc.*
 import java.io.File
 import kotlin.system.exitProcess
@@ -94,19 +95,15 @@ class Cartridge(private val options: Options) : Memory {
             } else null
         val rom = Rom(0x0, values.slice(IntRange(0x0, romSize.size() - 1)).toIntArray())
 
-        val saveFile = if (type.battery) {
-            File("${options.file.parent}\\${options.file.nameWithoutExtension}.sav")
-        } else null
+        val battery = Battery(options)
 
         this.mbc = when (type.kind) {
-            CartridgeType.Kind.MBC1 -> Mbc1(rom, ram, saveFile)
-            CartridgeType.Kind.MBC2 -> Mbc2(rom, ram, saveFile)
-            CartridgeType.Kind.MBC3 -> Mbc3(rom, ram, saveFile)
-            CartridgeType.Kind.MBC5 -> Mbc5(rom, ram, saveFile)
+            CartridgeType.Kind.MBC1 -> Mbc1(rom, ram, battery)
+            CartridgeType.Kind.MBC2 -> Mbc2(rom, ram, battery)
+            CartridgeType.Kind.MBC3 -> Mbc3(rom, ram, battery)
+            CartridgeType.Kind.MBC5 -> Mbc5(rom, ram, battery)
             else -> RomOnly(rom, ram)
         }
-
-        this.mbc.load()
     }
 
     private fun verifyChecksum(values: IntArray): Boolean {

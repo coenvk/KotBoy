@@ -1,8 +1,6 @@
 package com.arman.kotboy.memory
 
 import com.arman.kotboy.GameBoy
-import com.arman.kotboy.io.cgb.Hdma
-import com.arman.kotboy.io.cgb.UndocumentedSpace
 
 class Mmu(private val gb: GameBoy) : Memory {
 
@@ -17,8 +15,8 @@ class Mmu(private val gb: GameBoy) : Memory {
         this.put(Hram()) // 0xFF80 - 0xFFFE
         this.put(gb.cart) // 0x0000 - 0x7FFF, 0xA000 - 0xBFFF
 
-        this.put(Hdma(gb))
-        this.put(UndocumentedSpace())
+//        this.put(Hdma(gb))
+//        this.put(UndocumentedSpace())
 
         this.put(InvalidRegion(0xFEA0, 0xFEFF)) // 0xFEA0 - 0xFEFF
         this.put(InvalidRegion(0xFF4C, 0xFF7F)) // 0xFF4C - 0xFF7F

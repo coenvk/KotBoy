@@ -305,14 +305,13 @@ class Ppu(private val gb: GameBoy) :
     ): Int {
         val yFlip = tileAttributes.toByte().at(6)
         val vramBank = tileAttributes.toByte().at(3).toInt()
-        var newLine = line
-        var newTileId = tileId
+        var newLine = line.rem(0x08)
+        val newTileId = tileId.toUnsignedInt()
         if (tileHeight == 16) {
             if (yFlip) {
                 newLine = 15 - newLine
             }
-            newTileId = (newTileId and 0xFE) + newLine / 8
-            newLine = newLine and 7
+            newLine = newLine and 0x7
         } else if (yFlip) {
             newLine = 7 - newLine
         }
@@ -320,80 +319,6 @@ class Ppu(private val gb: GameBoy) :
         val addr = tileAddr + newLine * 2
         return (vram[addr, vramBank].toUnsignedInt() shl 8) or (vram[addr + 1, vramBank].toUnsignedInt())
     }
-
-//    private fun renderLn() {
-//        if (!isLcdEnabled()) return
-//        if (this.ly < 0 || this.ly >= Display.WIDTH) return
-//
-//        drawBackground()
-//        drawWindow()
-//        drawSprites()
-//    }
-//
-//    private fun drawSprites() {
-//        if (isSpriteDisplayEnabled()) {
-//            for (px in 0 until Display.WIDTH) {
-//                this.sprites.forEach loop@{ that ->
-//                    that?.let {
-//                        if (px >= it.x && px < it.x + 8) {
-//                            var x = px - it.x
-//                            if (it.xflip) x = 7 - x
-//                            val pi = ((it.y ushr (15 - x)) and 1) or (((it.y ushr (7 - x)) shl 1) and 2)
-//                            if (pi != 0 && it.priority) {
-//                                val color = colorPalette[(it.palette ushr (pi * 2)) and 3]
-//                                buffer[this.ly.toUnsignedInt() * Display.WIDTH + px] = color
-//                                return@loop
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun drawWindow() {
-//        if (isWindowDisplayEnabled() && this.ly.toUnsignedInt() >= wy.toUnsignedInt()) {
-//            val y = (this.ly - this.wy).toUnsignedInt()
-//            val swx = (wx - 0x07).toUnsignedInt()
-//
-//            for (x in (swx / 0x08)..20) {
-//                val mapAddr = getWindowTileTableAddr() + ((y / 0x08) * 0x20)
-//                var tileId = vram[mapAddr + x].toUnsignedInt()
-//                if (getTilePatternTableAddr() == Gpu.TILE_PATTERN_TABLE_0) tileId = tileId.toByte() + 128
-//                drawTile(x * 0x08, y.rem(0x08), tileId, -wx + 0x07)
-//            }
-//        }
-//    }
-//
-//    private fun drawBackground() {
-//        if (isBgEnabled()) {
-//            val y = (this.ly + this.scy.rem(0x08)) / 0x08
-//            for (x in 0..20) {
-//                val mapAddr = getBgTileTableAddr() + ((y / 0x08) * 0x20)
-//                var tileId = vram[mapAddr + x].toUnsignedInt()
-//                if (getTilePatternTableAddr() == Gpu.TILE_PATTERN_TABLE_0) tileId = tileId.toByte() + 128
-//                drawTile(x * 0x08, y.rem(0x08), tileId, scx)
-//            }
-//        }
-//    }
-//
-//    private fun drawTile(x: Int, y: Int, tileId: Int, ax: Int) {
-//        val tileData = getTileData(tileId, y, getTilePatternTableAddr())
-//
-//        for (px in 0 until 0x08) {
-//            val dx = x + px
-//            val tx = (dx + ax).toUnsignedInt().rem(0x08)
-//
-//
-//            if (dx < 0 || dx >= Display.WIDTH) continue
-//
-//            val index = dx + this.ly.toUnsignedInt() * Display.WIDTH
-//            val pi = ((tileData ushr (15 - tx)) and 1) or (((tileData ushr (7 - tx)) shl 1) and 2)
-//
-//            val color = colorPalette[(this.bgp ushr (pi * 2)) and 3]
-//            buffer[index] = color
-//        }
-//    }
 
     /*
     LCDC register
@@ -482,13 +407,15 @@ class Ppu(private val gb: GameBoy) :
         var x: Int = 0
         var y: Int = 0
 
+        var tileData: Int = 0
         var tileId: Int = 0
 
         var flags: Int = 0
 
         fun setTo(y: Int, x: Int, tileId: Int, flags: Int) {
             this.x = x
-            this.y = getRow(tileId, y)
+            this.y = y
+            this.tileData = getSpriteLine(tileId, y)
             this.tileId = tileId
             this.flags = flags
         }
@@ -511,23 +438,33 @@ class Ppu(private val gb: GameBoy) :
 
         open fun vramBank(): Int = 0
 
-        private fun getRow(tileId: Int, y: Int): Int {
-            val row = ly.toUnsignedInt() - y
-            val bmp = getTileData(
-                tileId.toUnsignedInt(),
-                row.rem(0x08),
+        private fun getSpriteLine(tileId: Int, y: Int): Int {
+            var line = ly.toUnsignedInt() - y
+            var newTileId = tileId
+            val height = getSpriteHeight()
+            if (height == 16) {
+                if (y <= ly.toUnsignedInt() && ly.toUnsignedInt() < y + 8) {
+                    newTileId = if (yFlip()) newTileId or 0x01 else newTileId and 0xFE
+                }
+                if (y + 8 <= ly.toUnsignedInt() && ly.toUnsignedInt() < y + 16) {
+                    newTileId = if (yFlip()) newTileId and 0xFE else newTileId or 0x01
+                    line -= 8
+                }
+            }
+            return getTileData(
+                newTileId,
+                line,
                 Gpu.TILE_PATTERN_TABLE_1,
                 this.flags,
-                getSpriteHeight()
+                height
             )
-            return bmp
         }
 
         fun render(px: Int, currentPriority: Int) {
             if (currentPriority == 0 || priority()) {
                 var x = px - this.x
-                if (xFlip()) x = 7 - x
-                val spi = ((y ushr (15 - x)) and 1) or (((y ushr (7 - x)) shl 1) and 2)
+                if (xFlip()) x = 7 - x // TODO: put in getTileData
+                val spi = ((tileData ushr (15 - x)) and 1) or (((tileData ushr (7 - x)) shl 1) and 2)
                 if (spi != 0) {
                     val color = colorPalette.obp(spi, paletteNumber())
                     buffer[ly.toUnsignedInt() * Display.WIDTH + px] = color

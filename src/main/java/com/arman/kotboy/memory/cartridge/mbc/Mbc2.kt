@@ -2,9 +2,9 @@ package com.arman.kotboy.memory.cartridge.mbc
 
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
-import java.io.File
+import com.arman.kotboy.memory.cartridge.battery.Battery
 
-class Mbc2(rom: Rom, ram: Ram? = null, saveFile: File? = null) : Mbc(rom, ram, saveFile) {
+class Mbc2(rom: Rom, ram: Ram? = null, battery: Battery? = null) : Mbc(rom, ram, battery) {
 
     init {
         assert(ram?.size() == 0x200)

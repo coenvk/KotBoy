@@ -1,14 +1,16 @@
 package com.arman.kotboy.memory.cartridge.mbc
 
-import com.arman.kotboy.cpu.util.toUnsignedInt
 import com.arman.kotboy.memory.Memory
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
-import java.io.File
-import kotlin.math.min
+import com.arman.kotboy.memory.cartridge.battery.Battery
 
-abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, private val saveFile: File? = null) :
+abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, protected val battery: Battery? = null) :
     Memory {
+
+    init {
+        load()
+    }
 
     protected var romBank: Int = 1
     protected var ramBank: Int = 0
@@ -31,30 +33,16 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, priva
         return address in 0x0..0x7fff || address in 0xa000..0xbfff
     }
 
-    protected fun save(): Boolean {
-        this.ram?.let {
-            val bytes = it.toBytes()
-            this.saveFile?.writeBytes(bytes)
-            return true
+    protected fun save() {
+        this.battery?.let {
+            this.ram?.run { it.save(this) }
         }
-        return false
     }
 
-    fun load(): Boolean {
-        if (this.saveFile == null || !this.saveFile.exists()) return false
-        this.ram?.let {
-            val enabled = it.enabled
-            it.enabled = true
-            var len = this.saveFile.length()
-            len -= len.rem(0x2000)
-            val buffer = this.saveFile.readBytes()
-            for (i in 0 until min(it.size(), len.toInt())) {
-                it[i + 0xA000] = buffer[i].toUnsignedInt()
-            }
-            it.enabled = enabled
-            return true
+    private fun load() {
+        this.battery?.let {
+            this.ram?.run { it.load(this) }
         }
-        return false
     }
 
     override fun get(address: Int): Int {
