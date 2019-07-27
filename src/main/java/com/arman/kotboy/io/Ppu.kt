@@ -121,7 +121,9 @@ class Ppu(private val gb: GameBoy) :
         this.wx = 0x00
         this.wy = 0x00
 
-        setScreenMode(Mode.VBlank)
+        this.colorPalette.reset()
+
+        setScreenMode(Mode.OamSearch)
         this.cycles = this.getScreenMode().cycles
     }
 
@@ -143,7 +145,7 @@ class Ppu(private val gb: GameBoy) :
                     vram.enabled = true
                     setScreenMode(Mode.HBlank)
                     this.ly = 0
-                    buffer.fill(colorPalette.bgp(0))
+                    buffer.fill(colorPalette.bgp(0)) // TODO: fill with 0xFFFFFF ???
                     gb.display.frameReady(buffer)
                 } else if (!isLcdEnabled()) {
                     setScreenMode(Mode.OamSearch)
@@ -315,7 +317,7 @@ class Ppu(private val gb: GameBoy) :
         } else if (yFlip) {
             newLine = 7 - newLine
         }
-        val tileAddr = newTileId * 0x10 + tileDataAddr
+        val tileAddr = newTileId.toUnsignedInt() * 0x10 + tileDataAddr
         val addr = tileAddr + newLine * 2
         return (vram[addr, vramBank].toUnsignedInt() shl 8) or (vram[addr + 1, vramBank].toUnsignedInt())
     }
@@ -383,7 +385,7 @@ class Ppu(private val gb: GameBoy) :
     }
 
     fun isScanlineEqual(): Boolean {
-        return this.stat.toByte().at(2)
+        return this.ly == this.lyc /* || this.stat.toByte().at(2)       ; TODO: doesn't work! */
     }
 
     fun isHBlankCheckEnabled(): Boolean {

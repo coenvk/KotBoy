@@ -50,8 +50,6 @@ class DmgPalette : Palette(IoReg.BGP.address, IoReg.OBP1.address) {
     }
 
     override fun reset() {
-        super.reset()
-
         this.bgp = 0xFC
         this.obp0 = 0xFF
         this.obp1 = 0xFF
