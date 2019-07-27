@@ -8,7 +8,7 @@ interface Display {
 
         const val WIDTH = 160
         const val HEIGHT = 144
-        const val SCALE = 6
+        const val SCALE = 3
 
     }
 
