@@ -4,13 +4,10 @@ import com.arman.kotboy.memory.Memory
 import com.arman.kotboy.memory.Ram
 import com.arman.kotboy.memory.Rom
 import com.arman.kotboy.memory.cartridge.battery.Battery
+import com.arman.kotboy.memory.cartridge.rtc.Rtc
 
 abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, protected val battery: Battery? = null) :
     Memory {
-
-    init {
-        load()
-    }
 
     protected var romBank: Int = 1
     protected var ramBank: Int = 0
@@ -33,15 +30,15 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, prote
         return address in 0x0..0x7fff || address in 0xa000..0xbfff
     }
 
-    protected fun save() {
+    protected fun save(rtc: Rtc? = null) {
         this.battery?.let {
-            this.ram?.run { it.save(this) }
+            this.ram?.run { it.save(this, rtc) }
         }
     }
 
-    private fun load() {
+    open fun load(rtc: Rtc? = null) {
         this.battery?.let {
-            this.ram?.run { it.load(this) }
+            this.ram?.run { it.load(this, rtc) }
         }
     }
 

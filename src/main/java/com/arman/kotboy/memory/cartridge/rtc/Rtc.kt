@@ -116,8 +116,8 @@ class Rtc {
             secs + mins * SECS_PER_MIN + hours * SECS_PER_HOUR + days * SECS_PER_DAY + daysHigh * 256 * SECS_PER_DAY
     }
 
-    fun serialze(): LongArray {
-        val data = LongArray(11)
+    fun serialize(): LongArray {
+        val data = LongArray(12)
         latch()
         data[0] = currentTimeSecs()
         data[5] = data[0]

@@ -14,29 +14,27 @@ class Battery(options: Options) {
         File(options.file.parent, "${options.file.nameWithoutExtension}.sav")
     }
 
-    private val rtcFile: File by lazy {
-        File(options.file.parent, "${options.file.nameWithoutExtension}.rtc")
-    }
-
-    fun save(ram: Ram) {
+    fun save(ram: Ram, rtc: Rtc? = null) {
         savFile.writeBytes(ram.toBytes())
+        rtc?.let { saveRtc(it) }
     }
 
-    fun saveRtc(rtc: Rtc) {
-        val data = rtc.serialze()
+    private fun saveRtc(rtc: Rtc) {
+        val data = rtc.serialize()
         val buffer = ByteArray(4 * data.size)
         var i = 0
-        while (i < min(4 * data.size, buffer.size)) {
-            val value = data[i / 4]
-            buffer[i++] = (value and 0xFF).toByte()
-            buffer[i++] = ((value shr 8) and 0xFF).toByte()
-            buffer[i++] = ((value shr 16) and 0xFF).toByte()
-            buffer[i++] = ((value shr 24) and 0xFF).toByte()
+        while (i < data.size) {
+            var j = i * 4
+            val value = data[i++]
+            buffer[j++] = (value and 0xFF).toByte()
+            buffer[j++] = ((value shr 8) and 0xFF).toByte()
+            buffer[j++] = ((value shr 16) and 0xFF).toByte()
+            buffer[j] = ((value shr 24) and 0xFF).toByte()
         }
-        rtcFile.writeBytes(buffer)
+        savFile.appendBytes(buffer)
     }
 
-    fun load(ram: Ram): Boolean {
+    fun load(ram: Ram, rtc: Rtc? = null): Boolean {
         if (!this.savFile.exists()) return false
         val enabled = ram.enabled
 
@@ -44,27 +42,30 @@ class Battery(options: Options) {
         var len = this.savFile.length()
         len -= len.rem(0x2000)
         val buffer = this.savFile.readBytes()
-        for (i in 0 until min(ram.size(), len.toInt())) {
+        val offset = min(ram.size(), len.toInt())
+        for (i in 0 until offset) {
             ram[i + 0xA000] = buffer[i].toUnsignedInt()
         }
         ram.enabled = enabled
 
+        rtc?.let {
+            val rtcBuffer = buffer.sliceArray(offset until buffer.size)
+            loadRtc(it, rtcBuffer)
+        }
+
         return true
     }
 
-    fun loadRtc(rtc: Rtc): Boolean {
-        if (!this.rtcFile.exists()) return false
-
-        val buffer = this.rtcFile.readBytes()
-        val data = LongArray(11)
+    private fun loadRtc(rtc: Rtc, buffer: ByteArray): Boolean {
+        val data = LongArray(12)
         var i = 0
-        while (i < min(4 * data.size, buffer.size)) {
-            val j = i
-            val d = buffer[i++]
-            val c = buffer[i++]
-            val b = buffer[i++]
-            val a = buffer[i++]
-            data[j] = ((a shl 24) or (b shl 16) or (c shl 8) or d.toUnsignedInt()).toLong()
+        while (i < data.size) {
+            var j = i * 4
+            val d = buffer[j++].toUnsignedInt()
+            val c = buffer[j++] shl 8
+            val b = buffer[j++] shl 16
+            val a = buffer[j] shl 24
+            data[i++] = (a or b or c or d).toLong()
         }
 
         rtc.deserialize(data)

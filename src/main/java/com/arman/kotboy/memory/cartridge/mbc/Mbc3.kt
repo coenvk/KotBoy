@@ -9,14 +9,12 @@ import com.arman.kotboy.memory.cartridge.rtc.Rtc
 
 class Mbc3(rom: Rom, ram: Ram? = null, battery: Battery? = null) : Mbc(rom, ram, battery) {
 
-    // TODO: RTC
     private val rtc: Rtc = Rtc()
-    private var mappedRegister: Int = 0
-    private var registerMapped: Boolean = false
-    private var latchReady: Boolean = false
+    private var latchRegister: Int = 0xFF
+    private var latchFinished: Boolean = false
 
-    init {
-        this.battery?.loadRtc(rtc)
+    override fun load(rtc: Rtc?) {
+        super.load(this.rtc)
     }
 
     override fun write(address: Int, value: Int): Boolean {
@@ -25,41 +23,23 @@ class Mbc3(rom: Rom, ram: Ram? = null, battery: Battery? = null) : Mbc(rom, ram,
                 this.ram?.let {
                     it.enabled = (value and 0x0A) == 0x0A
                     if (!it.enabled) {
-                        save()
-                        this.battery?.saveRtc(rtc)
+                        save(rtc)
                     }
                 }
             }
             in 0x2000..0x3fff -> romBank = if (value == 0) 1 else value and 0x7F
-            in 0x4000..0x5fff -> if (value in 0x0..0x3) {
-                ramBank = value and 0x3
-                this.registerMapped = false
-
-            } else if (value in 0x8..0xC) {
-                this.mappedRegister = value - 0x8
-                this.registerMapped = true
-            }
+            in 0x4000..0x5fff -> ramBank = value
             in 0x6000..0x7fff -> {
-                /* When writing 00h, and then 01h to this register, the current
-                   time becomes latched into the RTC registers
-                   08h  RTC S   Seconds   0-59 (0-3Bh)
-                   09h  RTC M   Minutes   0-59 (0-3Bh)
-                   0Ah  RTC H   Hours     0-23 (0-17h)
-                   0Bh  RTC DL  Lower 8 bits of Day Counter (0-FFh)
-                   0Ch  RTC DH  Upper 1 bit of Day Counter, Carry Bit, Halt Flag
-                         Bit 0  Most significant bit of Day Counter (Bit 8)
-                         Bit 6  Halt (0=Active, 1=Stop Timer)
-                         Bit 7  Day Counter Carry Bit (1=Counter Overflow) */
-                if (value == 0x0) {
-                    this.latchReady = true
-                } else if (value == 0x1) {
-                    if (this.latchReady) {
-                        this.rtc.latch()
-                    } else {
+                if (value == 0x01 && latchRegister == 0x00) {
+                    this.latchFinished = if (this.latchFinished) {
                         this.rtc.unlatch()
+                        false
+                    } else {
+                        this.rtc.latch()
+                        true
                     }
-                    this.latchReady = false
                 }
+                latchRegister = value
             }
             else -> return false
         }
@@ -113,7 +93,7 @@ class Mbc3(rom: Rom, ram: Ram? = null, battery: Battery? = null) : Mbc(rom, ram,
                 ret = ret or (if (rtc.isCounterOverflow()) (1 shl 7) else 0)
                 ret.toLong()
             }
-            else -> 0L
+            else -> 0xFFL
         }.toInt()
     }
 

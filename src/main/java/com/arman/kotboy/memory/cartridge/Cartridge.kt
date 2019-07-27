@@ -104,6 +104,8 @@ class Cartridge(private val options: Options) : Memory {
             CartridgeType.Kind.MBC5 -> Mbc5(rom, ram, battery)
             else -> RomOnly(rom, ram)
         }
+
+        this.mbc.load()
     }
 
     private fun verifyChecksum(values: IntArray): Boolean {
