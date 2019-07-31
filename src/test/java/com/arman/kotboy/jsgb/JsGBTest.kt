@@ -1,5 +1,6 @@
-package com.arman.kotboy
+package com.arman.kotboy.jsgb
 
+import com.arman.kotboy.GameBoy
 import org.junit.jupiter.api.Test
 
 class JsGBTest {

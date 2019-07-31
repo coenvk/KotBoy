@@ -1,5 +1,6 @@
-package com.arman.kotboy
+package com.arman.kotboy.blargg
 
+import com.arman.kotboy.GameBoy
 import com.arman.kotboy.cpu.util.lsb
 import com.arman.kotboy.cpu.util.msb
 import org.junit.jupiter.api.*

@@ -1,5 +1,6 @@
-package com.arman.kotboy
+package com.arman.kotboy.mooneye
 
+import com.arman.kotboy.GameBoy
 import com.arman.kotboy.cpu.Reg8
 import com.arman.kotboy.cpu.util.toUnsignedInt
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
