@@ -4,11 +4,7 @@ notifications:
 jdk:
   - oraclejdk8
   - oraclejdk9
-  - oraclejdk10
-  - oraclejdk11
   - openjdk8
-  - openjdk10
-  - openjdk11
 script:
-  mvn test -Pblargg-test -B
-  mvn test -Pmooneye-test -B
+  - mvn test -Pblargg-test -B
+  - mvn test -Pmooneye-test -B
