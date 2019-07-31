@@ -50,7 +50,9 @@ class Battery(options: Options) {
 
         rtc?.let {
             val rtcBuffer = buffer.sliceArray(offset until buffer.size)
-            loadRtc(it, rtcBuffer)
+            if (rtcBuffer.size >= 44) {
+                loadRtc(it, rtcBuffer)
+            }
         }
 
         return true

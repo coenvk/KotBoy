@@ -5,18 +5,15 @@ import com.arman.kotboy.io.IoReg
 
 class DmgPalette : Palette(IoReg.BGP.address, IoReg.OBP1.address) {
 
-    companion object {
+    private val bgpPalette: IntArray
+    private val obp0Palette: IntArray
+    private val obp1Palette: IntArray
 
-        private const val WHITE = 0xFFFFFF
-        private const val LIGHT_GRAY = 0xAAAAAA
-        private const val DARK_GRAY = 0x555555
-        private const val BLACK = 0x000000
-
+    init {
+        bgpPalette = DmgScheme.GREY.colors
+        obp0Palette = DmgScheme.BLUE.colors
+        obp1Palette = DmgScheme.BLUE.colors
     }
-
-    private val bgpPalette: IntArray = intArrayOf(WHITE, LIGHT_GRAY, DARK_GRAY, BLACK)
-    private val obp0Palette: IntArray = intArrayOf(WHITE, LIGHT_GRAY, DARK_GRAY, BLACK)
-    private val obp1Palette: IntArray = intArrayOf(WHITE, LIGHT_GRAY, DARK_GRAY, BLACK)
 
     var bgp: Int
         get() {
