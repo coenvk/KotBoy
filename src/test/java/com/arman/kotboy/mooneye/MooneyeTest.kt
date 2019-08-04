@@ -1,14 +1,16 @@
 package com.arman.kotboy.mooneye
 
-import com.arman.kotboy.GameBoy
-import com.arman.kotboy.cpu.Reg8
-import com.arman.kotboy.cpu.util.toUnsignedInt
+import com.arman.kotboy.core.GameBoy
+import com.arman.kotboy.core.Options
+import com.arman.kotboy.core.cpu.Reg8
+import com.arman.kotboy.core.cpu.util.toUnsignedInt
+import junit.framework.Assert
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestMethodOrder
+import java.io.File
 import java.time.Duration
 
 
@@ -20,12 +22,12 @@ class MooneyeTest {
 
     private lateinit var gb: GameBoy
 
-    private fun setup(rom: String) {
-        gb = GameBoy(rom)
+    private fun setup(rom: File) {
+        gb = GameBoy(Options(rom))
         gb.reset()
     }
 
-    fun run(rom: String): Boolean {
+    fun run(rom: File): Boolean {
         setup(rom)
 
         var div = 0
@@ -687,7 +689,9 @@ class MooneyeTest {
     }
 
     private fun testRom(rom: String) {
-        assertTrue(run("src\\test\\resources\\roms\\mooneye\\$rom"))
+        val url = javaClass.classLoader.getResource("roms\\mooneye\\$rom")
+        Assert.assertNotNull(url)
+        run(File(url!!.toURI()))
     }
 
 }

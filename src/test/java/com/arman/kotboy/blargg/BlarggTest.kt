@@ -1,10 +1,13 @@
 package com.arman.kotboy.blargg
 
-import com.arman.kotboy.GameBoy
-import com.arman.kotboy.cpu.util.lsb
-import com.arman.kotboy.cpu.util.msb
+import com.arman.kotboy.core.GameBoy
+import com.arman.kotboy.core.Options
+import com.arman.kotboy.core.cpu.util.lsb
+import com.arman.kotboy.core.cpu.util.msb
+import junit.framework.Assert
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
+import java.io.File
 import java.time.Duration
 
 class BlarggTest {
@@ -16,12 +19,12 @@ class BlarggTest {
 
     private lateinit var gb: GameBoy
 
-    private fun setup(rom: String) {
-        gb = GameBoy(rom)
+    private fun setup(rom: File) {
+        gb = GameBoy(Options(rom))
         gb.reset()
     }
 
-    fun run(rom: String) {
+    fun run(rom: File) {
         setup(rom)
 
         var div = 0
@@ -421,7 +424,9 @@ class BlarggTest {
     }
 
     private fun testRom(rom: String) {
-        run("src\\test\\resources\\roms\\blargg\\$rom")
+        val url = javaClass.classLoader.getResource("roms\\blargg\\$rom")
+        Assert.assertNotNull(url)
+        run(File(url!!.toURI()))
     }
 
 }

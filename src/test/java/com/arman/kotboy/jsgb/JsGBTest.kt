@@ -1,18 +1,21 @@
 package com.arman.kotboy.jsgb
 
-import com.arman.kotboy.GameBoy
+import com.arman.kotboy.core.GameBoy
+import com.arman.kotboy.core.Options
+import junit.framework.Assert
 import org.junit.jupiter.api.Test
+import java.io.File
 
 class JsGBTest {
 
     private lateinit var gb: GameBoy
 
-    private fun setup(rom: String) {
-        gb = GameBoy(rom)
+    private fun setup(rom: File) {
+        gb = GameBoy(Options(rom))
         gb.reset()
     }
 
-    fun run(rom: String) {
+    fun run(rom: File) {
         setup(rom)
 
         var div = 0
@@ -35,7 +38,9 @@ class JsGBTest {
     }
 
     private fun testRom(rom: String) {
-        run("src\\test\\resources\\roms\\jsgb\\$rom")
+        val url = javaClass.classLoader.getResource("roms\\jsgb\\$rom")
+        Assert.assertNotNull(url)
+        run(File(url!!.toURI()))
     }
 
 }
