@@ -1,10 +1,10 @@
-package com.arman.kotboy.core.io.cgb
+package com.arman.kotboy.consoles.cgb.io
 
 import com.arman.kotboy.core.cpu.util.at
 import com.arman.kotboy.core.cpu.util.toInt
 import com.arman.kotboy.core.memory.Address
 
-class Key1 : Address(CgbReg.KEY1.address) {
+class Key1 : Address(CgbIoReg.KEY1.address) {
 
     override fun get(address: Int): Int {
         return super.get(address) or 0x7E

@@ -1,4 +1,4 @@
-package com.arman.kotboy.core
+package com.arman.kotboy
 
 fun main() {
     val kb = KotBoy()

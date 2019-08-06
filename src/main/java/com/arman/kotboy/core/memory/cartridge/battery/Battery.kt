@@ -1,6 +1,5 @@
 package com.arman.kotboy.core.memory.cartridge.battery
 
-import com.arman.kotboy.core.Options
 import com.arman.kotboy.core.cpu.util.shl
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import com.arman.kotboy.core.memory.Ram
@@ -8,10 +7,10 @@ import com.arman.kotboy.core.memory.cartridge.rtc.Rtc
 import java.io.File
 import kotlin.math.min
 
-class Battery(options: Options) {
+class Battery(file: File) {
 
     private val savFile: File by lazy {
-        File(options.file.parent, "${options.file.nameWithoutExtension}.sav")
+        File(file.parent, "${file.nameWithoutExtension}.sav")
     }
 
     fun save(ram: Ram, rtc: Rtc? = null) {

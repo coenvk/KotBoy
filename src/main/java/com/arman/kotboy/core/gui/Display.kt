@@ -1,6 +1,9 @@
 package com.arman.kotboy.core.gui
 
-interface Display {
+interface Display : Runnable {
+
+    val border: Border?
+        get() = null
 
     fun frameReady(buffer: IntArray)
 
@@ -8,7 +11,6 @@ interface Display {
 
         const val WIDTH = 160
         const val HEIGHT = 144
-        const val SCALE = 3
 
     }
 

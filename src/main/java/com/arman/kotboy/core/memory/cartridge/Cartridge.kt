@@ -9,9 +9,8 @@ import com.arman.kotboy.core.memory.cartridge.mbc.*
 import java.io.File
 import kotlin.system.exitProcess
 
-class Cartridge(private val options: Options) : Memory {
+class Cartridge(private val file: File) : Memory {
 
-    constructor(file: File) : this(Options(file))
     constructor(filename: String) : this(File(filename))
 
     private val type: CartridgeType
@@ -30,10 +29,10 @@ class Cartridge(private val options: Options) : Memory {
 
     private val mbc: Mbc
 
-    private var bootstrap: Boolean = options.bootstrap
+    private var bootstrap: Boolean = Options.bootstrap
 
     init {
-        val values = RomReader(options.file).read()
+        val values = RomReader(file).read()
         this.type = CartridgeType[values[MemoryMap.CARTRIDGE_TYPE.startAddress]]
 
         val sb = StringBuilder()
@@ -83,19 +82,19 @@ class Cartridge(private val options: Options) : Memory {
 
         this.headerChecksum = values[MemoryMap.HEADER_CHECKSUM.startAddress]
         this.globalChecksum =
-            (values[MemoryMap.GLOBAL_CHECKSUM.startAddress] shl 8) or values[MemoryMap.GLOBAL_CHECKSUM.endAddress]
+                (values[MemoryMap.GLOBAL_CHECKSUM.startAddress] shl 8) or values[MemoryMap.GLOBAL_CHECKSUM.endAddress]
 
         if (!this.verifyChecksum(values) || !this.verifyNintentoLogo(values)) { // TODO: stop / lock gameboy
             exitProcess(-1)
         }
 
         val ram =
-            if (ramSize.size() > 0) {
-                Ram(0xA000, 0xA000 + ramSize.size())
-            } else null
+                if (ramSize.size() > 0) {
+                    Ram(0xA000, 0xA000 + ramSize.size())
+                } else null
         val rom = Rom(0x0, values.slice(IntRange(0x0, romSize.size() - 1)).toIntArray())
 
-        val battery = Battery(options)
+        val battery = Battery(file)
 
         this.mbc = when (type.kind) {
             CartridgeType.Kind.MBC1 -> Mbc1(rom, ram, battery)
@@ -143,7 +142,7 @@ class Cartridge(private val options: Options) : Memory {
     }
 
     override fun accepts(address: Int): Boolean {
-        return super.accepts(address) || address == 0xFF50
+        return this.mbc.accepts(address) || address == 0xFF50
     }
 
     override fun fill(value: Int) = this.mbc.fill(value)

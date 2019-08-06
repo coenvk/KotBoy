@@ -1,4 +1,4 @@
-package com.arman.kotboy.core.gpu
+package com.arman.kotboy.consoles.gb.gpu
 
 enum class DmgScheme(vararg val colors: Int) {
 

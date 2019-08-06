@@ -8,8 +8,8 @@ class BmpBorder(bmpFile: String) : Border {
 
     private val bmp: BufferedImage = ImageIO.read(javaClass.classLoader.getResourceAsStream(bmpFile))
 
-    override fun draw(g: Graphics2D) {
-        g.drawImage(this.bmp, 0, 0, bmp.width * Display.SCALE, bmp.height * Display.SCALE, null)
+    override fun draw(g: Graphics2D, offsetX: Int, offsetY: Int, scale: Float) {
+        g.drawImage(this.bmp, offsetX, offsetY, (bmp.width * scale).toInt(), (bmp.height * scale).toInt(), null)
     }
 
 }

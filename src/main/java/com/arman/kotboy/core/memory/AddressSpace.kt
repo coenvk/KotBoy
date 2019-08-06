@@ -2,14 +2,14 @@ package com.arman.kotboy.core.memory
 
 import com.arman.kotboy.core.cpu.util.hexString
 
-abstract class AddressSpace(protected val startAddress: Int, protected val values: IntArray) : Memory {
+abstract class AddressSpace(protected val startAddress: Int, private val values: IntArray) : Memory {
 
     var enabled: Boolean = true
-    val endAddress: Int = this.values.size + this.startAddress - 1
+    private val endAddress: Int = this.values.size + this.startAddress - 1
 
     constructor(startAddress: Int, endAddress: Int = startAddress) : this(
-        startAddress,
-        IntArray(endAddress + 1 - startAddress)
+            startAddress,
+            IntArray(endAddress + 1 - startAddress)
     )
 
     override fun reset() {

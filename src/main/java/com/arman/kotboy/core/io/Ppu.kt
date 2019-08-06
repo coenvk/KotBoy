@@ -1,10 +1,12 @@
 package com.arman.kotboy.core.io
 
+import com.arman.kotboy.consoles.cgb.gpu.CgbPalette
+import com.arman.kotboy.consoles.cgb.memory.CgbVram
+import com.arman.kotboy.consoles.gb.gpu.DmgPalette
 import com.arman.kotboy.core.GameBoy
 import com.arman.kotboy.core.cpu.util.at
 import com.arman.kotboy.core.cpu.util.toInt
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
-import com.arman.kotboy.core.gpu.DmgPalette
 import com.arman.kotboy.core.gpu.Gpu
 import com.arman.kotboy.core.gpu.Palette
 import com.arman.kotboy.core.gui.Display
@@ -13,7 +15,7 @@ import com.arman.kotboy.core.memory.Ram
 import java.io.Serializable
 
 class Ppu(private val gb: GameBoy) :
-    IoDevice(IoReg.LCDC.address, IoReg.WX.address) {
+        IoDevice(IoReg.LCDC.address, IoReg.WX.address) {
 
     companion object {
 
@@ -33,17 +35,20 @@ class Ppu(private val gb: GameBoy) :
 
     private val buffer: IntArray = IntArray(Display.WIDTH * Display.HEIGHT)
 
-    private var sprites: Array<Sprite> =
-        Array(SPRITES_PER_LINE) { Sprite() }
-
-    private val colorPalette: Palette by lazy {
-        DmgPalette()
+    private val sprites: Array<out Sprite> by lazy {
+        if (gb.cart.isCgb()) Array(SPRITES_PER_LINE) { CgbSprite() }
+        else Array(SPRITES_PER_LINE) { Sprite() }
     }
 
-    val oam: Oam
+    private val colorPalette: Palette by lazy {
+        if (gb.cart.isCgb()) CgbPalette()
+        else DmgPalette()
+    }
+
+    private val oam: Oam
         get() = gb.gpu.oam
 
-    val vram: Ram
+    private val vram: Ram
         get() = gb.gpu.vram
 
     var lcdc: Int
@@ -177,10 +182,10 @@ class Ppu(private val gb: GameBoy) :
                 val y = this.ly.toUnsignedInt()
                 if (sy <= y && sy + h > y) {
                     sprites[num++].setTo(
-                        sy,
-                        oam[oamPos++] - 8,
-                        oam[oamPos++],
-                        oam[oamPos++]
+                            sy,
+                            oam[oamPos++] - 8,
+                            oam[oamPos++],
+                            oam[oamPos++]
                     )
                 } else {
                     oamPos += 3
@@ -277,9 +282,9 @@ class Ppu(private val gb: GameBoy) :
                     if (getTilePatternTableAddr() == Gpu.TILE_PATTERN_TABLE_0) {
                         tileId = tileId.toByte() + 128
                     }
-//                    this.vram.let {
-//                        if (it is CgbVram) tileAttributes = it[addr, 1]
-//                    }
+                    this.vram.let {
+                        if (it is CgbVram) tileAttributes = it[addr, 1]
+                    }
                     tileData = getTileData(tileId, y.rem(0x08), getTilePatternTableAddr(), tileAttributes)
                 }
                 pi = ((tileData ushr (15 - tx)) and 1) or (((tileData ushr (7 - tx)) shl 1) and 2)
@@ -299,11 +304,11 @@ class Ppu(private val gb: GameBoy) :
     }
 
     private fun getTileData(
-        tileId: Int,
-        line: Int,
-        tileDataAddr: Int,
-        tileAttributes: Int = 0,
-        tileHeight: Int = 8
+            tileId: Int,
+            line: Int,
+            tileDataAddr: Int,
+            tileAttributes: Int = 0,
+            tileHeight: Int = 8
     ): Int {
         val yFlip = tileAttributes.toByte().at(6)
         val vramBank = tileAttributes.toByte().at(3).toInt()
@@ -435,7 +440,7 @@ class Ppu(private val gb: GameBoy) :
         }
 
         open fun paletteNumber(): Int {
-            return this.flags and (1 shl 4)
+            return this.flags.at(4).toInt()
         }
 
         open fun vramBank(): Int = 0
@@ -454,11 +459,11 @@ class Ppu(private val gb: GameBoy) :
                 }
             }
             return getTileData(
-                newTileId,
-                line,
-                Gpu.TILE_PATTERN_TABLE_1,
-                this.flags,
-                height
+                    newTileId,
+                    line,
+                    Gpu.TILE_PATTERN_TABLE_1,
+                    this.flags,
+                    height
             )
         }
 
@@ -483,7 +488,7 @@ class Ppu(private val gb: GameBoy) :
         }
 
         override fun paletteNumber(): Int {
-            return this.flags and 0x07
+            return this.flags and 0x7
         }
 
     }

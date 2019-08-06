@@ -49,15 +49,15 @@ class SoundChannel3 : SoundChannel(IoReg.NR_30.address, IoReg.NR_34.address) {
     override val length: Int = 256
 
     override fun start() {
-        throw UnsupportedOperationException("Operation, start, has not been implemented yet!")
+        // TODO
     }
 
     override fun stop() {
-        throw UnsupportedOperationException("Operation, stop, has not been implemented yet!")
+        // TODO
     }
 
     override fun trigger() {
-        throw UnsupportedOperationException("Operation, trigger, has not been implemented yet!")
+        // TODO
     }
 
     override fun reset() {

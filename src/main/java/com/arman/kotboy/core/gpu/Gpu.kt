@@ -1,5 +1,6 @@
 package com.arman.kotboy.core.gpu
 
+import com.arman.kotboy.consoles.cgb.memory.CgbVram
 import com.arman.kotboy.core.GameBoy
 import com.arman.kotboy.core.memory.Memory
 import com.arman.kotboy.core.memory.Oam
@@ -19,7 +20,7 @@ class Gpu(private val gb: GameBoy) : Memory {
         const val WINDOW_TILE_TABLE_1 = 0x9C00
     }
 
-    val vram: Ram = Vram()
+    val vram: Ram = if (gb.cart.isCgb()) CgbVram() else Vram()
     val oam: Oam = Oam()
 
     override fun accepts(address: Int): Boolean {

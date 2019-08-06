@@ -6,7 +6,7 @@ import com.arman.kotboy.core.memory.Rom
 import com.arman.kotboy.core.memory.cartridge.battery.Battery
 import com.arman.kotboy.core.memory.cartridge.rtc.Rtc
 
-abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, protected val battery: Battery? = null) :
+abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, private val battery: Battery? = null) :
         Memory {
 
     protected var romBank: Int = 1

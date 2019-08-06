@@ -110,7 +110,7 @@ class SoundChannel1 : SoundChannel(IoReg.NR_10.address, IoReg.NR_14.address) {
     }
 
     override fun stop() {
-        throw UnsupportedOperationException("Operation, stop, has not been implemented yet!")
+        // TODO
     }
 
     override fun trigger() {

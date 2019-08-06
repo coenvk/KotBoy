@@ -1,7 +1,6 @@
 package com.arman.kotboy.jsgb
 
 import com.arman.kotboy.core.GameBoy
-import com.arman.kotboy.core.Options
 import junit.framework.Assert
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -11,7 +10,7 @@ class JsGBTest {
     private lateinit var gb: GameBoy
 
     private fun setup(rom: File) {
-        gb = GameBoy(Options(rom))
+        gb = GameBoy(rom)
         gb.reset()
     }
 

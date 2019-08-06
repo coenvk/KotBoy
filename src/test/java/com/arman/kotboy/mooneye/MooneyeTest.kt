@@ -1,7 +1,6 @@
 package com.arman.kotboy.mooneye
 
 import com.arman.kotboy.core.GameBoy
-import com.arman.kotboy.core.Options
 import com.arman.kotboy.core.cpu.Reg8
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import junit.framework.Assert
@@ -23,7 +22,7 @@ class MooneyeTest {
     private lateinit var gb: GameBoy
 
     private fun setup(rom: File) {
-        gb = GameBoy(Options(rom))
+        gb = GameBoy(rom)
         gb.reset()
     }
 
@@ -39,9 +38,9 @@ class MooneyeTest {
         }
 
         return gb.cpu.read(Reg8.A).toUnsignedInt() == 0x00 && gb.cpu.read(Reg8.B).toUnsignedInt() == 0x03 && gb.cpu.read(
-            Reg8.C
+                Reg8.C
         ).toUnsignedInt() == 0x05 && gb.cpu.read(Reg8.D).toUnsignedInt() == 0x08 && gb.cpu.read(Reg8.E).toUnsignedInt() == 0x0D && gb.cpu.read(
-            Reg8.H
+                Reg8.H
         ).toUnsignedInt() == 0x15 && gb.cpu.read(Reg8.L).toUnsignedInt() == 0x22
     }
 

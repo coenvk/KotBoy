@@ -1,6 +1,6 @@
-package com.arman.kotboy.core.io.cgb
+package com.arman.kotboy.consoles.cgb.io
 
-enum class CgbReg(val address: Int) {
+enum class CgbIoReg(val address: Int) {
 
     KEY1(0xFF4D),
     VBK(0xFF4F),

@@ -1,7 +1,6 @@
 package com.arman.kotboy.blargg
 
 import com.arman.kotboy.core.GameBoy
-import com.arman.kotboy.core.Options
 import com.arman.kotboy.core.cpu.util.lsb
 import com.arman.kotboy.core.cpu.util.msb
 import junit.framework.Assert
@@ -20,7 +19,7 @@ class BlarggTest {
     private lateinit var gb: GameBoy
 
     private fun setup(rom: File) {
-        gb = GameBoy(Options(rom))
+        gb = GameBoy(rom)
         gb.reset()
     }
 

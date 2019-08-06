@@ -40,15 +40,15 @@ class SoundChannel2 : SoundChannel(IoReg.NR_21.address, IoReg.NR_24.address) {
     override val period: Int = (2048 - this.frequency) * 4
 
     override fun start() {
-        throw UnsupportedOperationException("Operation, start, has not been implemented yet!")
+        // TODO
     }
 
     override fun stop() {
-        throw UnsupportedOperationException("Operation, stop, has not been implemented yet!")
+        // TODO
     }
 
     override fun trigger() {
-        throw UnsupportedOperationException("Operation, trigger, has not been implemented yet!")
+        // TODO
     }
 
     override fun reset() {

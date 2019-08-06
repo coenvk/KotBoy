@@ -1,16 +1,45 @@
 package com.arman.kotboy.core
 
-import java.io.File
+import java.util.prefs.Preferences
 
-class Options(val file: File, vararg params: String) {
+object Options {
 
-    constructor(rom: String, vararg params: String) : this(File(rom), *params)
+    private val store: Preferences = Preferences.userNodeForPackage(Options::class.java)
 
-    val dmg: Boolean = params.contains("dmg")
-    val cgb: Boolean = if (this.dmg) false else params.contains("cgb")
-    val bootstrap: Boolean = params.contains("bootstrap")
-    val disableSaves: Boolean = params.contains("disable-saves")
-    val debug: Boolean = params.contains("debug")
-    val headless: Boolean = params.contains("headless")
+    var fullscreen: Boolean = store.getBoolean("fullscreen", false)
+        set(value) {
+            field = value
+            store.putBoolean("fullscreen", value)
+        }
+
+    var windowed: Boolean = store.getBoolean("windowed", true)
+        set(value) {
+            field = value
+            store.putBoolean("windowed", value)
+        }
+
+    var scale: Int = store.getInt("scale", 1)
+        set(value) {
+            field = value
+            store.putInt("scale", value)
+        }
+
+    var bootstrap: Boolean = store.getBoolean("bootstrap", false)
+        set(value) {
+            field = value
+            store.putBoolean("bootstrap", value)
+        }
+
+    var dmg: Boolean = store.getBoolean("dmg", true)
+        set(value) {
+            field = value
+            store.putBoolean("dmg", value)
+        }
+
+    var cgb: Boolean = store.getBoolean("cgb", false)
+        set(value) {
+            field = value
+            store.putBoolean("cgb", value)
+        }
 
 }

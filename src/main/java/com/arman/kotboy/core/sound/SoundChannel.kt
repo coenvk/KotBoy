@@ -15,6 +15,9 @@ abstract class SoundChannel(startAddress: Int, endAddress: Int) : IoDevice(start
 
     protected var clocks: Int = 0
 
+    var output: Int = 0
+        private set
+
     fun isEnabled(): Boolean {
         return this.enabled && this.dacEnabled
     }

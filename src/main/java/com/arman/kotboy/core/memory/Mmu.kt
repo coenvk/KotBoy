@@ -1,5 +1,8 @@
 package com.arman.kotboy.core.memory
 
+import com.arman.kotboy.consoles.cgb.memory.CgbWram
+import com.arman.kotboy.consoles.cgb.memory.Hdma
+import com.arman.kotboy.consoles.cgb.memory.UndocumentedSpace
 import com.arman.kotboy.core.GameBoy
 
 class Mmu(private val gb: GameBoy) : Memory {
@@ -10,15 +13,16 @@ class Mmu(private val gb: GameBoy) : Memory {
         this.put(gb.gpu) // 0x8000 - 0x9FFF, 0xFE00 - 0xFE9F
         this.put(gb.io) // 0xFF00 - 0xFF4B, 0xFFFF
 
-        this.put(Wram()) // 0xC000 - 0xDFFF (echo 0xE000 - 0xFDFF)
+        if (gb.cart.isCgb()) this.put(CgbWram())
+        else this.put(Wram()) // 0xC000 - 0xDFFF (echo 0xE000 - 0xFDFF)
 
         this.put(Hram()) // 0xFF80 - 0xFFFE
         this.put(gb.cart) // 0x0000 - 0x7FFF, 0xA000 - 0xBFFF
 
-//        if (gb.cart.isCgb()) {
-//            this.put(Hdma(gb))
-//            this.put(UndocumentedSpace())
-//        }
+        if (gb.cart.isCgb()) {
+            this.put(Hdma(gb))
+            this.put(UndocumentedSpace())
+        }
 
         this.put(InvalidRegion(0xFEA0, 0xFEFF)) // 0xFEA0 - 0xFEFF
         this.put(InvalidRegion(0xFF4C, 0xFF7F)) // 0xFF4C - 0xFF7F

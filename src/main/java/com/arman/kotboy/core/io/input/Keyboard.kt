@@ -3,35 +3,19 @@ package com.arman.kotboy.core.io.input
 import com.arman.kotboy.core.io.Joypad
 import java.awt.event.KeyEvent
 
-class Keyboard(override var buttonListener: ButtonListener? = null) : InputHandler {
+class Keyboard(override var buttonListener: ButtonListener? = null) : Controller() {
 
-    private val mapping by lazy {
-        val map = HashMap<Int, Joypad.Key>()
-        map[KeyEvent.VK_LEFT] = Joypad.Key.LEFT
-        map[KeyEvent.VK_RIGHT] = Joypad.Key.RIGHT
-        map[KeyEvent.VK_UP] = Joypad.Key.UP
-        map[KeyEvent.VK_DOWN] = Joypad.Key.DOWN
-        map[KeyEvent.VK_S] = Joypad.Key.A
-        map[KeyEvent.VK_A] = Joypad.Key.B
-        map[KeyEvent.VK_ENTER] = Joypad.Key.START
-        map[KeyEvent.VK_SHIFT] = Joypad.Key.SELECT
+    override val bindings by lazy {
+        val map = ArrayList<Keybinding>()
+        map.add(Keybinding(Joypad.Key.LEFT, KeyEvent.VK_LEFT))
+        map.add(Keybinding(Joypad.Key.RIGHT, KeyEvent.VK_RIGHT))
+        map.add(Keybinding(Joypad.Key.UP, KeyEvent.VK_UP))
+        map.add(Keybinding(Joypad.Key.DOWN, KeyEvent.VK_DOWN))
+        map.add(Keybinding(Joypad.Key.A, KeyEvent.VK_S))
+        map.add(Keybinding(Joypad.Key.B, KeyEvent.VK_A))
+        map.add(Keybinding(Joypad.Key.START, KeyEvent.VK_ENTER))
+        map.add(Keybinding(Joypad.Key.SELECT, KeyEvent.VK_SHIFT))
         return@lazy map
-    }
-
-    override fun keyTyped(e: KeyEvent) = Unit
-
-    override fun keyPressed(e: KeyEvent) {
-        val key = getKey(e)
-        key?.let { buttonListener?.onPress(it) }
-    }
-
-    override fun keyReleased(e: KeyEvent) {
-        val key = getKey(e)
-        key?.let { buttonListener?.onRelease(it) }
-    }
-
-    private fun getKey(e: KeyEvent): Joypad.Key? {
-        return mapping[e.keyCode]
     }
 
 }

@@ -1,44 +1,45 @@
-package com.arman.kotboy.core.io.cgb
+package com.arman.kotboy.consoles.cgb.memory
 
+import com.arman.kotboy.consoles.cgb.io.CgbIoReg
 import com.arman.kotboy.core.GameBoy
 import com.arman.kotboy.core.io.IoDevice
 
-class Hdma(private val gb: GameBoy) : IoDevice(CgbReg.HDMA1.address, CgbReg.HDMA5.address) {
+class Hdma(private val gb: GameBoy) : IoDevice(CgbIoReg.HDMA1.address, CgbIoReg.HDMA5.address) {
 
     var hdma1: Int
         get() {
-            return super.get(CgbReg.HDMA1.address)
+            return super.get(CgbIoReg.HDMA1.address)
         }
         set(value) {
-            super.set(CgbReg.HDMA1.address, value)
+            super.set(CgbIoReg.HDMA1.address, value)
         }
     var hdma2: Int
         get() {
-            return super.get(CgbReg.HDMA2.address)
+            return super.get(CgbIoReg.HDMA2.address)
         }
         set(value) {
-            super.set(CgbReg.HDMA2.address, value)
+            super.set(CgbIoReg.HDMA2.address, value)
         }
     var hdma3: Int
         get() {
-            return super.get(CgbReg.HDMA3.address)
+            return super.get(CgbIoReg.HDMA3.address)
         }
         set(value) {
-            super.set(CgbReg.HDMA3.address, value)
+            super.set(CgbIoReg.HDMA3.address, value)
         }
     var hdma4: Int
         get() {
-            return super.get(CgbReg.HDMA4.address)
+            return super.get(CgbIoReg.HDMA4.address)
         }
         set(value) {
-            super.set(CgbReg.HDMA4.address, value)
+            super.set(CgbIoReg.HDMA4.address, value)
         }
     var hdma5: Int
         get() {
-            return super.get(CgbReg.HDMA5.address)
+            return super.get(CgbIoReg.HDMA5.address)
         }
         set(value) {
-            super.set(CgbReg.HDMA5.address, value)
+            super.set(CgbIoReg.HDMA5.address, value)
         }
 
     private fun getSource(): Int {
@@ -58,7 +59,7 @@ class Hdma(private val gb: GameBoy) : IoDevice(CgbReg.HDMA1.address, CgbReg.HDMA
     }
 
     override fun set(address: Int, value: Int): Boolean {
-        if (address == CgbReg.HDMA5.address) {
+        if (address == CgbIoReg.HDMA5.address) {
             super.set(address, value)
             transfer()
             super.set(address, 0xFF)
