@@ -11,9 +11,9 @@ class DmgPalette : Palette(IoReg.BGP.address, IoReg.OBP1.address) {
     private val obp1Palette: IntArray
 
     init {
-        bgpPalette = DmgScheme.GB_LIGHT.colors
-        obp0Palette = DmgScheme.GB_LIGHT.colors
-        obp1Palette = DmgScheme.GB_LIGHT.colors
+        bgpPalette = DmgScheme.BLUE_SENI.colors
+        obp0Palette = DmgScheme.BLUE_SENI.colors
+        obp1Palette = DmgScheme.BLUE_SENI.colors
     }
 
     var bgp: Int

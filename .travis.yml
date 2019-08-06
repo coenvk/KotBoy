@@ -8,3 +8,6 @@ jdk:
 script:
   - mvn test -Pblargg-test -B
   - mvn test -Pmooneye-test -B
+cache:
+  directories:
+    - target
