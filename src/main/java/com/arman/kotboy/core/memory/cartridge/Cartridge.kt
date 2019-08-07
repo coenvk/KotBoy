@@ -7,7 +7,6 @@ import com.arman.kotboy.core.memory.*
 import com.arman.kotboy.core.memory.cartridge.battery.Battery
 import com.arman.kotboy.core.memory.cartridge.mbc.*
 import java.io.File
-import kotlin.system.exitProcess
 
 class Cartridge(private val file: File) : Memory {
 
@@ -84,10 +83,6 @@ class Cartridge(private val file: File) : Memory {
         this.globalChecksum =
                 (values[MemoryMap.GLOBAL_CHECKSUM.startAddress] shl 8) or values[MemoryMap.GLOBAL_CHECKSUM.endAddress]
 
-        if (!this.verifyChecksum(values) || !this.verifyNintentoLogo(values)) { // TODO: stop / lock gameboy
-            exitProcess(-1)
-        }
-
         val ram =
                 if (ramSize.size() > 0) {
                     Ram(0xA000, 0xA000 + ramSize.size())
@@ -105,6 +100,11 @@ class Cartridge(private val file: File) : Memory {
         }
 
         this.mbc.load()
+    }
+
+    fun verify(): Boolean {
+        val values = RomReader(file).read()
+        return verifyChecksum(values) && verifyNintentoLogo(values)
     }
 
     private fun verifyChecksum(values: IntArray): Boolean {

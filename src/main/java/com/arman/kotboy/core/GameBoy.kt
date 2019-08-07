@@ -9,31 +9,36 @@ import com.arman.kotboy.core.io.input.ButtonListener
 import com.arman.kotboy.core.io.input.InputHandler
 import com.arman.kotboy.core.memory.Mmu
 import com.arman.kotboy.core.memory.cartridge.Cartridge
+import com.arman.kotboy.core.sound.Speaker
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-class GameBoy(private val file: File, val display: Display, val inputHandler: InputHandler) : Runnable {
-
-    val cart: Cartridge = Cartridge(file)
+class GameBoy(private val file: File, val display: Display, val inputHandler: InputHandler, val speaker: Speaker) : Runnable {
 
     private val lock = ReentrantLock()
     private val unPauseCondition = lock.newCondition()
 
-    constructor(file: File, inputHandler: InputHandler) : this(
+    constructor(file: File, display: Display, inputHandler: InputHandler) : this(
             file,
-            object : Display {
-                override fun run() {
+            display,
+            inputHandler,
+            object : Speaker {
+                override fun start() {
                 }
 
-                override fun frameReady(buffer: IntArray) {
+                override fun stop() {
                 }
-            }, inputHandler
+
+                override fun play(left: Int, right: Int) {
+                }
+            }
     )
 
-    constructor(file: File) : this(
+    constructor(file: File, display: Display) : this(
             file,
+            display,
             object : InputHandler {
                 override fun keyTyped(e: KeyEvent?) {
                 }
@@ -46,11 +51,24 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
 
                 override var buttonListener: ButtonListener?
                     get() = null
-                    set(value) {}
+                    set(_) {}
+            }
+    )
+
+    constructor(file: File) : this(
+            file,
+            object : Display {
+                override fun frameReady(buffer: IntArray) {
+                }
+
+                override fun run() {
+                }
             }
     )
 
     constructor(rom: String) : this(File(rom))
+
+    val cart: Cartridge = Cartridge(file)
 
     val io: Io = Io(this)
     val gpu: Gpu = Gpu(this)
@@ -81,6 +99,10 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
     override fun run() {
         if (!Options.bootstrap) {
             this.reset()
+        }
+
+        if (!this.cart.verify()) {
+            this.stopped = true
         }
 
         val clockSpeed = if (cart.isSgb()) {

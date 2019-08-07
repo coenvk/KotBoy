@@ -225,9 +225,6 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <includes>
-                                <include>*$*</include>
-                            </includes>
                             <excludes>
                                 <exclude/>
                                 <exclude>**/jsgb/**</exclude>
@@ -246,9 +243,6 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <includes>
-                                <include>*$*</include>
-                            </includes>
                             <excludes>
                                 <exclude/>
                                 <exclude>**/blargg/**</exclude>

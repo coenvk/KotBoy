@@ -14,7 +14,7 @@ import java.time.Duration
 class MooneyeTest {
 
     companion object {
-        const val TIMEOUT = 30L
+        const val TIMEOUT = 100L
     }
 
     private lateinit var gb: GameBoy

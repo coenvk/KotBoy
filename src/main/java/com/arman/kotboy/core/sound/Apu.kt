@@ -1,13 +1,17 @@
 package com.arman.kotboy.core.sound
 
-import com.arman.kotboy.core.cpu.Cpu
+import com.arman.kotboy.core.GameBoy
 import com.arman.kotboy.core.cpu.util.at
 import com.arman.kotboy.core.io.IoDevice
 import com.arman.kotboy.core.io.IoReg
-import javax.sound.sampled.AudioFormat
-import javax.sound.sampled.AudioSystem
 
-class Apu : IoDevice(IoReg.NR_50.address, IoReg.NR_52.address) {
+class Apu(private val gb: GameBoy) : IoDevice(IoReg.NR_50.address, IoReg.NR_52.address) {
+
+    companion object {
+
+        const val CHANNELS = 4
+
+    }
 
     var nr50: Int
         get() {
@@ -31,62 +35,24 @@ class Apu : IoDevice(IoReg.NR_50.address, IoReg.NR_52.address) {
             super.set(IoReg.NR_52.address, value)
         }
 
-    private val samplingRate: Float = 22050f
-    private val samplingCycles: Int = (Cpu.DMG_CLOCK_SPEED / samplingRate).toInt()
-
-    private val bufferSize: Int = 1024
-    private val format = AudioFormat(AudioFormat.Encoding.PCM_UNSIGNED, samplingRate, 8, 2, 2, samplingRate, false)
-
-    private val dataLine = AudioSystem.getSourceDataLine(format)
-
     private val channels: Array<SoundChannel> =
             arrayOf(SoundChannel1(), SoundChannel2(), SoundChannel3(), SoundChannel4())
 
-    private var i: Int = 0
     private var powerStatus: Boolean = false
 
-    private lateinit var buffer: ByteArray
-
-    fun start() {
-        channels.forEach { it.start() }
-
-        this.dataLine.open(format, bufferSize)
-        this.dataLine.start()
-        this.buffer = ByteArray(this.dataLine.bufferSize)
-    }
-
-    fun stop() {
-        this.dataLine.drain()
-        this.dataLine.stop()
-
-        channels.forEach { it.stop() }
-    }
-
     override fun tick(cycles: Int): Boolean {
-        return false // TODO: implement sound channels
+        // TODO: implement sound channels
         if (!powerStatus) return false
 
         super.tick(cycles)
-        if (this.cycles < this.samplingCycles) return false
-        this.cycles -= this.samplingCycles
+        if (this.cycles < Speaker.SAMPLING_CYCLES) return false
+        this.cycles -= Speaker.SAMPLING_CYCLES
 
-        channels.forEach { it.tick(cycles) }
+        this.channels.forEach { it.tick(cycles) }
 
         val (left, right) = mix()
 
-        buffer[i++] = left.toByte()
-        buffer[i++] = right.toByte()
-
-        if (i >= buffer.size) {
-
-            var offset = 0
-            while (true) {
-                offset += this.dataLine.write(buffer, offset, buffer.size)
-                if (offset == buffer.size) break
-            }
-
-            i = 0
-        }
+        this.gb.speaker.play(left, right)
         return true
     }
 
@@ -150,6 +116,16 @@ class Apu : IoDevice(IoReg.NR_50.address, IoReg.NR_52.address) {
             IoReg.NR_52.address -> value = value or 0x70
         }
         return value
+    }
+
+    private fun start() {
+        this.channels.forEach { it.start() }
+        this.gb.speaker.start()
+    }
+
+    private fun stop() {
+        this.gb.speaker.stop()
+        this.channels.forEach { it.stop() }
     }
 
 }

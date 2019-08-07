@@ -150,7 +150,7 @@ class Ppu(private val gb: GameBoy) :
                     vram.enabled = true
                     setScreenMode(Mode.HBlank)
                     this.ly = 0
-                    buffer.fill(colorPalette.bgp(0)) // TODO: fill with 0xFFFFFF ???
+                    buffer.fill(colorPalette.bgp(0))
                     gb.display.frameReady(buffer)
                 } else if (!isLcdEnabled()) {
                     setScreenMode(Mode.OamSearch)
@@ -390,7 +390,7 @@ class Ppu(private val gb: GameBoy) :
     }
 
     fun isScanlineEqual(): Boolean {
-        return this.ly == this.lyc /* || this.stat.toByte().at(2)       ; TODO: doesn't work! */
+        return this.ly == this.lyc
     }
 
     fun isHBlankCheckEnabled(): Boolean {
