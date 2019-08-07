@@ -61,7 +61,7 @@ class MooneyeTest {
     inner class AcceptanceTest {
 
         private fun testRom(rom: String) {
-            this@MooneyeTest.testRom("acceptance\\$rom")
+            this@MooneyeTest.testRom("acceptance/$rom")
         }
 
         @Nested
@@ -69,7 +69,7 @@ class MooneyeTest {
         inner class BitsTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("bits\\$rom")
+                this@AcceptanceTest.testRom("bits/$rom")
             }
 
             @Test
@@ -94,7 +94,7 @@ class MooneyeTest {
         inner class InstrTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("instr\\$rom")
+                this@AcceptanceTest.testRom("instr/$rom")
             }
 
             @Test
@@ -109,7 +109,7 @@ class MooneyeTest {
         inner class InterruptsTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("interrupts\\$rom")
+                this@AcceptanceTest.testRom("interrupts/$rom")
             }
 
             @Test
@@ -124,7 +124,7 @@ class MooneyeTest {
         inner class OamDmaTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("oam_dma\\$rom")
+                this@AcceptanceTest.testRom("oam_dma/$rom")
             }
 
             @Test
@@ -149,7 +149,7 @@ class MooneyeTest {
         inner class PpuTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("ppu\\$rom")
+                this@AcceptanceTest.testRom("ppu/$rom")
             }
 
             @Test
@@ -219,7 +219,7 @@ class MooneyeTest {
         inner class SerialTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("serial\\$rom")
+                this@AcceptanceTest.testRom("serial/$rom")
             }
 
             @Test
@@ -234,7 +234,7 @@ class MooneyeTest {
         inner class TimerTest {
 
             private fun testRom(rom: String) {
-                this@AcceptanceTest.testRom("timer\\$rom")
+                this@AcceptanceTest.testRom("timer/$rom")
             }
 
             @Test
@@ -516,7 +516,7 @@ class MooneyeTest {
     inner class EmulatorOnlyTest {
 
         private fun testRom(rom: String) {
-            this@MooneyeTest.testRom("emulator-only\\$rom")
+            this@MooneyeTest.testRom("emulator-only/$rom")
         }
 
         @Nested
@@ -524,7 +524,7 @@ class MooneyeTest {
         inner class Mbc1Test {
 
             private fun testRom(rom: String) {
-                this@EmulatorOnlyTest.testRom("mbc1\\$rom")
+                this@EmulatorOnlyTest.testRom("mbc1/$rom")
             }
 
             @Test
@@ -586,7 +586,7 @@ class MooneyeTest {
     inner class ManualOnlyTest {
 
         private fun testRom(rom: String) {
-            this@MooneyeTest.testRom("manual-only\\$rom")
+            this@MooneyeTest.testRom("manual-only/$rom")
         }
 
         @Test
@@ -601,7 +601,7 @@ class MooneyeTest {
     inner class MiscTest {
 
         private fun testRom(rom: String) {
-            this@MooneyeTest.testRom("misc\\$rom")
+            this@MooneyeTest.testRom("misc/$rom")
         }
 
         @Nested
@@ -609,7 +609,7 @@ class MooneyeTest {
         inner class BitsTest {
 
             private fun testRom(rom: String) {
-                this@MiscTest.testRom("bits\\$rom")
+                this@MiscTest.testRom("bits/$rom")
             }
 
             @Test
@@ -624,7 +624,7 @@ class MooneyeTest {
         inner class PpuTest {
 
             private fun testRom(rom: String) {
-                this@MiscTest.testRom("ppu\\$rom")
+                this@MiscTest.testRom("ppu/$rom")
             }
 
             @Test
@@ -671,7 +671,7 @@ class MooneyeTest {
     inner class UtilsTest {
 
         private fun testRom(rom: String) {
-            this@MooneyeTest.testRom("utils\\$rom")
+            this@MooneyeTest.testRom("utils/$rom")
         }
 
         @Test
@@ -687,10 +687,10 @@ class MooneyeTest {
     }
 
     private fun testRom(rom: String) {
-        val url = javaClass.classLoader.getResource("roms\\mooneye\\$rom")
+        val url = javaClass.classLoader.getResource("roms/mooneye/$rom")
         if (url != null) run(File(url.toURI()))
         else {
-            val dir = "${System.getProperty("user.dir")}\\src\\test\\resources\\roms\\mooneye\\$rom"
+            val dir = "${System.getProperty("user.dir")}/src/test/resources/roms/mooneye/$rom"
             run(File(dir))
         }
     }

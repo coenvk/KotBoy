@@ -62,7 +62,7 @@ class BlarggTest {
     inner class CgbSoundTest {
 
         private fun testRom(rom: String) {
-            this@BlarggTest.testRom("cgb_sound\\individual\\$rom")
+            this@BlarggTest.testRom("cgb_sound/individual/$rom")
         }
 
         @Test
@@ -133,7 +133,7 @@ class BlarggTest {
     inner class CpuInstrsTest {
 
         private fun testRom(rom: String) {
-            this@BlarggTest.testRom("cpu_instrs\\individual\\$rom")
+            this@BlarggTest.testRom("cpu_instrs/individual/$rom")
         }
 
         @Test
@@ -199,7 +199,7 @@ class BlarggTest {
     inner class DmgSoundTest {
 
         private fun testRom(rom: String) {
-            this@BlarggTest.testRom("dmg_sound\\individual\\$rom")
+            this@BlarggTest.testRom("dmg_sound/individual/$rom")
         }
 
         @Test
@@ -270,7 +270,7 @@ class BlarggTest {
     inner class MemTimingTest {
 
         private fun testRom(rom: String) {
-            this@BlarggTest.testRom("mem_timing\\individual\\$rom")
+            this@BlarggTest.testRom("mem_timing/individual/$rom")
         }
 
         @Test
@@ -296,7 +296,7 @@ class BlarggTest {
     inner class MemTiming2Test {
 
         private fun testRom(rom: String) {
-            this@BlarggTest.testRom("mem_timing-2\\individual\\$rom")
+            this@BlarggTest.testRom("mem_timing-2/individual/$rom")
         }
 
         @Test
@@ -322,7 +322,7 @@ class BlarggTest {
     inner class OamBugTest {
 
         private fun testRom(rom: String) {
-            this@BlarggTest.testRom("oam_bug\\individual\\$rom")
+            this@BlarggTest.testRom("oam_bug/individual/$rom")
         }
 
         @Test
@@ -370,62 +370,62 @@ class BlarggTest {
     @Test
     @Tag("Main")
     fun testCgbSound() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("cgb_sound\\cgb_sound.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("cgb_sound/cgb_sound.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testCpuInstrs() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("cpu_instrs\\cpu_instrs.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("cpu_instrs/cpu_instrs.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testDmgSound() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("dmg_sound\\dmg_sound.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("dmg_sound/dmg_sound.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testHaltBug() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("halt_bug\\halt_bug.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("halt_bug/halt_bug.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testInstrTiming() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("instr_timing\\instr_timing.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("instr_timing/instr_timing.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testInterruptTime() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("interrupt_time\\interrupt_time.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("interrupt_time/interrupt_time.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testMemTiming() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("mem_timing\\mem_timing.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("mem_timing/mem_timing.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testMemTiming2() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("mem_timing-2\\mem_timing-2.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("mem_timing-2/mem_timing-2.zip") }
     }
 
     @Test
     @Tag("Main")
     fun testOamBug() {
-        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("oam_bug\\oam_bug.zip") }
+        assertTimeoutPreemptively(Duration.ofSeconds(TIMEOUT)) { testRom("oam_bug/oam_bug.zip") }
     }
 
     private fun testRom(rom: String) {
-        val url = javaClass.classLoader.getResource("roms\\blargg\\$rom")
+        val url = javaClass.classLoader.getResource("roms/blargg/$rom")
         if (url != null) run(File(url.toURI()))
         else {
-            val dir = "${System.getProperty("user.dir")}\\src\\test\\resources\\roms\\blargg\\$rom"
+            val dir = "${System.getProperty("user.dir")}/src/test/resources/roms/blargg/$rom"
             run(File(dir))
         }
     }

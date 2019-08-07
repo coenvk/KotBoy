@@ -36,10 +36,10 @@ class JsGBTest {
     }
 
     private fun testRom(rom: String) {
-        val url = javaClass.classLoader.getResource("roms\\jsgb\\$rom")
+        val url = javaClass.classLoader.getResource("roms/jsgb/$rom")
         if (url != null) run(File(url.toURI()))
         else {
-            val dir = "${System.getProperty("user.dir")}\\src\\test\\resources\\roms\\jsgb\\$rom"
+            val dir = "${System.getProperty("user.dir")}/src/test/resources/roms/jsgb/$rom"
             run(File(dir))
         }
     }
