@@ -5,9 +5,13 @@ jdk:
   - oraclejdk8
   - oraclejdk9
   - openjdk8
+branches:
+  only:
+    - master
 script:
   - mvn test -Pblargg-test -B
   - mvn test -Pmooneye-test -B
 cache:
   directories:
-    - target
+    - $TRAVIS_BUILD_DIR/target
+    - $HOME/.m2
