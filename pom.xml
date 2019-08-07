@@ -112,6 +112,7 @@
                 <configuration>
                     <argLine>-Xmx1024m</argLine>
                     <excludes>
+                        <exclude/>
                         <exclude>**/jsgb/**</exclude>
                     </excludes>
                 </configuration>
@@ -224,7 +225,11 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+                            <includes>
+                                <include>*$*</include>
+                            </includes>
                             <excludes>
+                                <exclude/>
                                 <exclude>**/jsgb/**</exclude>
                                 <exclude>**/mooneye/**</exclude>
                             </excludes>
@@ -241,7 +246,11 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
+                            <includes>
+                                <include>*$*</include>
+                            </includes>
                             <excludes>
+                                <exclude/>
                                 <exclude>**/blargg/**</exclude>
                                 <exclude>**/jsgb/**</exclude>
                             </excludes>
