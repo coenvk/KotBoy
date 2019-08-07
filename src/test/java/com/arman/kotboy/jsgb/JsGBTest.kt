@@ -1,7 +1,6 @@
 package com.arman.kotboy.jsgb
 
 import com.arman.kotboy.core.GameBoy
-import junit.framework.Assert
 import org.junit.jupiter.api.Test
 import java.io.File
 
@@ -38,8 +37,11 @@ class JsGBTest {
 
     private fun testRom(rom: String) {
         val url = javaClass.classLoader.getResource("roms\\jsgb\\$rom")
-        Assert.assertNotNull(url)
-        run(File(url!!.toURI()))
+        if (url != null) run(File(url.toURI()))
+        else {
+            val dir = "${System.getProperty("user.dir")}\\src\\test\\resources\\roms\\jsgb\\$rom"
+            run(File(dir))
+        }
     }
 
 }

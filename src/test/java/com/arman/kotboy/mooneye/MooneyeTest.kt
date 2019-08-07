@@ -3,7 +3,6 @@ package com.arman.kotboy.mooneye
 import com.arman.kotboy.core.GameBoy
 import com.arman.kotboy.core.cpu.Reg8
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
-import junit.framework.Assert
 import org.junit.jupiter.api.Assertions.assertTimeoutPreemptively
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Nested
@@ -689,8 +688,11 @@ class MooneyeTest {
 
     private fun testRom(rom: String) {
         val url = javaClass.classLoader.getResource("roms\\mooneye\\$rom")
-        Assert.assertNotNull(url)
-        run(File(url!!.toURI()))
+        if (url != null) run(File(url.toURI()))
+        else {
+            val dir = "${System.getProperty("user.dir")}\\src\\test\\resources\\roms\\mooneye\\$rom"
+            run(File(dir))
+        }
     }
 
 }
