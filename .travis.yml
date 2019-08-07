@@ -9,8 +9,8 @@ branches:
   only:
     - master
 script:
-  - mvn test -Pblargg-test -B -f ./pom.xml
-  - mvn test -Pmooneye-test -B -f ./pom.xml
+  - mvn test -Pblargg-test -B
+  - mvn test -Pmooneye-test -B
 cache:
   directories:
     - $TRAVIS_BUILD_DIR/target

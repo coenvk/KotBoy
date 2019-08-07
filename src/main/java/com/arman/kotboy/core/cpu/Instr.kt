@@ -589,6 +589,8 @@ class Instr(val opCode: OpCode, private vararg val args: Int) : Iterable<Instr> 
             OpCode.SET_FD -> cpu.set_fd(*args)
             OpCode.SET_FE -> cpu.set_fe(*args)
             OpCode.SET_FF -> cpu.set_ff(*args)
+
+            else -> Unit
         }
         return opCode.cycles
     }

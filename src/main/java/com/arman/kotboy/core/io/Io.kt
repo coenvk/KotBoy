@@ -2,7 +2,6 @@ package com.arman.kotboy.core.io
 
 import com.arman.kotboy.core.GameBoy
 import com.arman.kotboy.core.memory.Memory
-import com.arman.kotboy.core.sound.Apu
 
 class Io(private val gb: GameBoy) : Memory {
 
@@ -16,7 +15,7 @@ class Io(private val gb: GameBoy) : Memory {
         put(Div()) // 0xFF04
         put(Timer()) // 0xFF05 - 0xFF07
         put(If()) // 0xFF0F
-        put(Apu()) // 0xFF24 - 0xFF26 (0xFF10 - 0xFF23)
+//        put(Apu()) // 0xFF24 - 0xFF26 (0xFF10 - 0xFF23)
         put(Ppu(gb)) // 0xFF40 - 0xFF4B (CBB: 0xFF40 - 0xFF6B)
         put(Ie()) // 0xFFFF
     }
