@@ -8,7 +8,7 @@ import com.arman.kotboy.core.io.IoReg
 import com.arman.kotboy.core.memory.Mmu
 import kotlin.experimental.inv
 
-@Suppress("FunctionName", "LocalVariableName", "PropertyName")
+@Suppress("FunctionName", "LocalVariableName", "PropertyName", "UNUSED_PARAMETER")
 class Cpu(private val gb: GameBoy) {
 
     companion object {
@@ -109,11 +109,11 @@ class Cpu(private val gb: GameBoy) {
         return f hasFlag flag
     }
 
-    fun hasNext(): Boolean {
+    private fun hasNext(): Boolean {
         return this.mmu[PC] >= 0
     }
 
-    fun next(): Int {
+    private fun next(): Int {
         handleInterrupt()
 
         if (this.halted) {
@@ -202,6 +202,8 @@ class Cpu(private val gb: GameBoy) {
     }
 
     fun tick(): Int {
+        if (!this.hasNext()) return 0
+
         val cycles = next()
         this.cycle += cycles
         return cycles
