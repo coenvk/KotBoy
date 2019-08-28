@@ -4,7 +4,7 @@
 
     <groupId>com.arman</groupId>
     <artifactId>KotBoy</artifactId>
-    <version>1.0</version>
+    <version>1.0-SNAPSHOT</version>
     <name>KotBoy</name>
     <description>A Game Boy (Color) emulator written in Kotlin.</description>
     <url>https://github.com/campoe/KotBoy</url>
@@ -204,9 +204,14 @@
     </dependencies>
 
     <distributionManagement>
+        <!--<repository>-->
+        <!--<id>sonatype-nexus-staging</id>-->
+        <!--<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>-->
+        <!--</repository>-->
         <repository>
-            <id>sonatype-nexus-staging</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>github</id>
+            <name>Github campoe Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/campoe/KotBoy</url>
         </repository>
         <site>
             <id>site</id>
