@@ -29,7 +29,7 @@
         <connection>scm:git:https://github.com/campoe/KotBoy.git</connection>
         <developerConnection>scm:git:https://github.com/campoe/KotBoy.git</developerConnection>
         <url>https://github.com/campoe/KotBoy.git</url>
-        <tag>kotboy-v1.0-SNAPSHOT-alpha</tag>
+        <tag>kotboy-v@{project.version}-alpha</tag>
     </scm>
 
     <properties>
@@ -70,10 +70,20 @@
                 <configuration>
                     <checkModificationExcludeList>pom.xml</checkModificationExcludeList>
                     <preparationGoals>clean verify</preparationGoals>
+                    <pushChanges>false</pushChanges>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <tagNameFormat>${project.release.tag}</tagNameFormat>
-                    <releaseLabel>${project.release.tag}</releaseLabel>
+                    <tagNameFormat>kotboy-v@{project.version}-alpha</tagNameFormat>
+                    <releaseLabel>kotboy-v@{project.version}-alpha</releaseLabel>
                     <releaseProfiles>release</releaseProfiles>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <removeSnapshot>true</removeSnapshot>
                 </configuration>
             </plugin>
 
@@ -113,8 +123,8 @@
                 <artifactId>github-release-plugin</artifactId>
                 <version>1.1.1</version>
                 <configuration>
-                    <releaseName>@{project.release.tag}</releaseName>
-                    <tag>@{project.release.tag}</tag>
+                    <releaseName>kotboy-v@{project.version}-alpha</releaseName>
+                    <tag>kotboy-v@{project.version}-alpha</tag>
 
                     <fileSets>
                         <fileSet>
