@@ -29,7 +29,7 @@
         <connection>scm:git:https://github.com/campoe/KotBoy.git</connection>
         <developerConnection>scm:git:https://github.com/campoe/KotBoy.git</developerConnection>
         <url>https://github.com/campoe/KotBoy.git</url>
-        <tag>kotboy-v@{project.version}-alpha</tag>
+        <tag>kotboy-v1.0-SNAPSHOT-alpha</tag>
     </scm>
 
     <properties>
@@ -72,8 +72,8 @@
                     <preparationGoals>clean verify</preparationGoals>
                     <pushChanges>false</pushChanges>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <tagNameFormat>kotboy-v@{project.version}-alpha</tagNameFormat>
-                    <releaseLabel>kotboy-v@{project.version}-alpha</releaseLabel>
+                    <tagNameFormat>kotboy-v${project.version}-alpha</tagNameFormat>
+                    <releaseLabel>kotboy-v${project.version}-alpha</releaseLabel>
                     <releaseProfiles>release</releaseProfiles>
                 </configuration>
             </plugin>
@@ -123,8 +123,8 @@
                 <artifactId>github-release-plugin</artifactId>
                 <version>1.1.1</version>
                 <configuration>
-                    <releaseName>kotboy-v@{project.version}-alpha</releaseName>
-                    <tag>kotboy-v@{project.version}-alpha</tag>
+                    <releaseName>kotboy-v${project.version}-alpha</releaseName>
+                    <tag>kotboy-v${project.version}-alpha</tag>
 
                     <fileSets>
                         <fileSet>
@@ -135,6 +135,10 @@
                             </includes>
                         </fileSet>
                     </fileSets>
+
+                    <overwriteArtifact>true</overwriteArtifact>
+                    <deleteRelease>true</deleteRelease>
+                    <failOnExistingRelease>false</failOnExistingRelease>
                 </configuration>
             </plugin>
 
