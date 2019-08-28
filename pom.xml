@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.arman</groupId>
     <artifactId>KotBoy</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
     <name>KotBoy</name>
     <description>A Game Boy (Color) emulator written in Kotlin.</description>
     <url>https://github.com/campoe/KotBoy</url>
@@ -30,7 +29,7 @@
         <connection>scm:git:git@github.com:campoe/KotBoy.git</connection>
         <developerConnection>scm:git:git@github.com:campoe/KotBoy.git</developerConnection>
         <url>git@github.com:campoe/KotBoy.git</url>
-        <tag>HEAD</tag>
+        <tag>1.1</tag>
     </scm>
 
     <properties>
@@ -136,7 +135,7 @@
                 <configuration>
                     <argLine>-Xmx1024m</argLine>
                     <excludes>
-                        <exclude/>
+                        <exclude />
                         <exclude>**/jsgb/**</exclude>
                     </excludes>
                 </configuration>
@@ -223,7 +222,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude/>
+                                <exclude />
                                 <exclude>**/jsgb/**</exclude>
                                 <exclude>**/mooneye/**</exclude>
                             </excludes>
@@ -241,7 +240,7 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <excludes>
-                                <exclude/>
+                                <exclude />
                                 <exclude>**/blargg/**</exclude>
                                 <exclude>**/jsgb/**</exclude>
                             </excludes>
