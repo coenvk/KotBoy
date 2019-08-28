@@ -4,25 +4,25 @@ import com.arman.kotboy.core.Options
 import com.arman.kotboy.core.RomReader
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import com.arman.kotboy.core.memory.*
-import com.arman.kotboy.core.memory.cartridge.battery.Battery
 import com.arman.kotboy.core.memory.cartridge.mbc.*
+import com.arman.kotboy.core.memory.cartridge.mbc.battery.Battery
 import java.io.File
 
-class Cartridge(private val file: File) : Memory {
+class Cartridge(val file: File) : Memory {
 
     constructor(filename: String) : this(File(filename))
 
-    private val type: CartridgeType
-    private val colorMode: ColorMode
-    private val sgbIndicator: Boolean
-    private val romSize: RomSize
-    private val ramSize: RamSize
-    private val destinationCode: DestinationCode
-    private val manufacturerCode: String
-    private val licenseeCode: String
-    private val versionNumber: Int
-    private val headerChecksum: Int
-    private val globalChecksum: Int
+    val type: CartridgeType
+    val colorMode: ColorMode
+    val sgbIndicator: Boolean
+    val romSize: RomSize
+    val ramSize: RamSize
+    val destinationCode: DestinationCode
+    val manufacturerCode: String
+    val licenseeCode: String
+    val versionNumber: Int
+    val headerChecksum: Int
+    val globalChecksum: Int
 
     val title: String
 
@@ -85,18 +85,25 @@ class Cartridge(private val file: File) : Memory {
 
         val ram =
                 if (ramSize.size() > 0) {
-                    Ram(0xA000, 0xA000 + ramSize.size())
+                    Ram(0xA000, 0xA000 + ramSize.size() - 1)
                 } else null
         val rom = Rom(0x0, values.slice(IntRange(0x0, romSize.size() - 1)).toIntArray())
 
         val battery = Battery(file)
 
         this.mbc = when (type.kind) {
+            CartridgeType.Kind.ROM -> RomOnly(rom)
             CartridgeType.Kind.MBC1 -> Mbc1(rom, ram, battery)
             CartridgeType.Kind.MBC2 -> Mbc2(rom, ram, battery)
             CartridgeType.Kind.MBC3 -> Mbc3(rom, ram, battery)
             CartridgeType.Kind.MBC5 -> Mbc5(rom, ram, battery)
-            else -> RomOnly(rom, ram)
+            CartridgeType.Kind.MMM01 -> Mmm01(rom, ram, battery)
+            CartridgeType.Kind.BANDAI_TAMA5,
+            CartridgeType.Kind.HUC1,
+            CartridgeType.Kind.HUC3,
+            CartridgeType.Kind.MBC6,
+            CartridgeType.Kind.MBC7,
+            CartridgeType.Kind.POCKET_CAMERA -> RomOnly(rom) // FIXME: Not implemented
         }
 
         this.mbc.load()

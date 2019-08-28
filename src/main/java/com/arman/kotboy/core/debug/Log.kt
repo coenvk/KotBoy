@@ -2,7 +2,7 @@ package com.arman.kotboy.core.debug
 
 object Log {
 
-    var LOG = false
+    private const val LOG = false
 
     fun i(s: String) {
         if (LOG) println("INFO: $s")

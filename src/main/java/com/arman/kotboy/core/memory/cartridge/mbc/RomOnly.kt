@@ -1,9 +1,8 @@
 package com.arman.kotboy.core.memory.cartridge.mbc
 
-import com.arman.kotboy.core.memory.Ram
 import com.arman.kotboy.core.memory.Rom
 
-class RomOnly(rom: Rom, ram: Ram? = null) : Mbc(rom, ram) {
+class RomOnly(rom: Rom) : Mbc(rom, null) {
 
     override fun write(address: Int, value: Int): Boolean {
         return false

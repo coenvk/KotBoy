@@ -4,6 +4,6 @@ import com.arman.kotboy.core.io.IoDevice
 
 class InfraredPort : IoDevice(CgbIoReg.RP.address) {
 
-    // TODO: not supported in emulator
+    // TODO: not supported in emulator; maybe use LED output
 
 }

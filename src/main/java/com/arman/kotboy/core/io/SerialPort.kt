@@ -1,6 +1,6 @@
 package com.arman.kotboy.core.io
 
-class SerialPort : IoDevice(IoReg.SB.address, IoReg.SC.address) { // TODO: cgb
+class SerialPort : IoDevice(IoReg.SB.address, IoReg.SC.address) { // TODO: cgb double speed mode
 
     private val update: Int = 512
 
@@ -27,7 +27,7 @@ class SerialPort : IoDevice(IoReg.SB.address, IoReg.SC.address) { // TODO: cgb
 
     override fun get(address: Int): Int {
         if (address == IoReg.SC.address) {
-            return super.get(address) or 0b01111110
+            return super.get(address) or 0x7E
         }
         return super.get(address)
     }

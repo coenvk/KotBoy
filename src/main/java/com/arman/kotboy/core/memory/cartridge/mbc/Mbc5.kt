@@ -3,7 +3,7 @@ package com.arman.kotboy.core.memory.cartridge.mbc
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import com.arman.kotboy.core.memory.Ram
 import com.arman.kotboy.core.memory.Rom
-import com.arman.kotboy.core.memory.cartridge.battery.Battery
+import com.arman.kotboy.core.memory.cartridge.mbc.battery.Battery
 
 class Mbc5(rom: Rom, ram: Ram? = null, battery: Battery? = null) : Mbc(rom, ram, battery) {
 
@@ -11,7 +11,7 @@ class Mbc5(rom: Rom, ram: Ram? = null, battery: Battery? = null) : Mbc(rom, ram,
         when (address) {
             in 0x0..0x1fff -> {
                 this.ram?.let {
-                    it.enabled = (value and 0x0A) == 0x0A
+                    it.enabled = (value and 0x0F) == 0x0A
                     if (!it.enabled) {
                         save()
                     }

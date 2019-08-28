@@ -3,8 +3,8 @@ package com.arman.kotboy.core.memory.cartridge.mbc
 import com.arman.kotboy.core.memory.Memory
 import com.arman.kotboy.core.memory.Ram
 import com.arman.kotboy.core.memory.Rom
-import com.arman.kotboy.core.memory.cartridge.battery.Battery
-import com.arman.kotboy.core.memory.cartridge.rtc.Rtc
+import com.arman.kotboy.core.memory.cartridge.mbc.battery.Battery
+import com.arman.kotboy.core.memory.cartridge.mbc.rtc.Rtc
 
 abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, private val battery: Battery? = null) :
         Memory {
@@ -82,6 +82,8 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, priva
 
     override fun reset() {
         this.ram?.reset()
+        this.romBank = 1
+        this.ramBank = 0
     }
 
     override fun clear() {

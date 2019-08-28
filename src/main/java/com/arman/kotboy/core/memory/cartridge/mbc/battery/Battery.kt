@@ -1,9 +1,9 @@
-package com.arman.kotboy.core.memory.cartridge.battery
+package com.arman.kotboy.core.memory.cartridge.mbc.battery
 
 import com.arman.kotboy.core.cpu.util.shl
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import com.arman.kotboy.core.memory.Ram
-import com.arman.kotboy.core.memory.cartridge.rtc.Rtc
+import com.arman.kotboy.core.memory.cartridge.mbc.rtc.Rtc
 import java.io.File
 import kotlin.math.min
 
@@ -38,10 +38,10 @@ class Battery(file: File) {
         val enabled = ram.enabled
 
         ram.enabled = true
-        var len = this.savFile.length()
-        len -= len.rem(0x2000)
         val buffer = this.savFile.readBytes()
-        val offset = min(ram.size(), len.toInt())
+        var len = buffer.size
+        len -= len.rem(0x2000)
+        val offset = min(ram.size(), len)
         for (i in 0 until offset) {
             ram[i + 0xA000] = buffer[i].toUnsignedInt()
         }

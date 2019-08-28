@@ -49,6 +49,10 @@
             </resource>
         </resources>
 
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <outputDirectory>target</outputDirectory>
+
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>

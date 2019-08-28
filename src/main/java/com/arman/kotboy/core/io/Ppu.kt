@@ -107,13 +107,6 @@ class Ppu(private val gb: GameBoy) :
         private set(value) {
             super.set(IoReg.STAT.address, value)
         }
-    var dma: Int
-        get() {
-            return super.get(IoReg.DMA.address)
-        }
-        private set(value) {
-            super.set(IoReg.DMA.address, value)
-        }
 
     override fun reset() {
         super.reset()
@@ -133,18 +126,9 @@ class Ppu(private val gb: GameBoy) :
     }
 
     override fun set(address: Int, value: Int): Boolean {
-        if (this.colorPalette.accepts(address)) {
-            return this.colorPalette.set(address, value)
-        }
-        return when (address) {
-            IoReg.DMA.address -> {
-                val src = value shl 8
-                for (i in 0xFE00..0xFE9F) {
-                    oam[i] = this.gb.mmu[src + i - 0xFE00].toUnsignedInt()
-                }
-                super.set(address, value)
-            }
-            IoReg.LCDC.address -> {
+        return when {
+            this.colorPalette.accepts(address) -> this.colorPalette.set(address, value)
+            address == IoReg.LCDC.address -> {
                 if (value and 0x80 == 0) {
                     oam.enabled = true
                     vram.enabled = true
@@ -164,7 +148,6 @@ class Ppu(private val gb: GameBoy) :
 
     override fun get(address: Int): Int {
         if (this.colorPalette.accepts(address)) return this.colorPalette[address]
-        if (address == IoReg.DMA.address) return 0xFF
         return super.get(address)
     }
 

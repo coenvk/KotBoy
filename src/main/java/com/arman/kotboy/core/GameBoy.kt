@@ -78,13 +78,17 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
     var stopped: Boolean = false
     var running: Boolean = false
 
+    val clockSpeed: Int by lazy {
+        if (cart.isSgb()) Cpu.SGB_CLOCK_SPEED
+        else Cpu.DMG_CLOCK_SPEED
+    }
+
     @Volatile
     var paused: Boolean = false
         set(value) {
             field = value
             if (!value) lock.withLock { unPauseCondition.signalAll() }
         }
-
 
     fun reset() {
         this.cpu.reset()
@@ -105,11 +109,8 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
             this.stopped = true
         }
 
-        val clockSpeed = if (cart.isSgb()) {
-            Cpu.SGB_CLOCK_SPEED
-        } else Cpu.DMG_CLOCK_SPEED
         val cyclesPerFrame = clockSpeed / Cpu.FRAME_RATE
-        val timeBetweenFrames = 1000 / Cpu.FRAME_RATE
+        val timePerFrame = 1000 / Cpu.FRAME_RATE
 
         this.running = true
         while (this.running) {
@@ -129,8 +130,8 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
                     cycle += tick()
                 }
                 val frameTime = System.currentTimeMillis() - start
-                val sleepTime = timeBetweenFrames - frameTime
-                if (frameTime < timeBetweenFrames) {
+                val sleepTime = timePerFrame - frameTime
+                if (frameTime < timePerFrame) {
                     Thread.sleep(sleepTime)
                 }
             }

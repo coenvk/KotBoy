@@ -4,6 +4,13 @@ import com.arman.kotboy.core.cpu.util.toUnsignedInt
 
 class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) { // TODO: cgb double speed mode
 
+    companion object {
+
+        @JvmField
+        val freqs = arrayOf(1024, 16, 64, 256)
+
+    }
+
     var tima: Int
         get() {
             return super.get(IoReg.TIMA.address)
@@ -18,6 +25,7 @@ class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) { // TODO: cgb dou
         set(value) {
             super.set(IoReg.TMA.address, value)
         }
+
     var tac: Int
         get() {
             return super.get(IoReg.TAC.address)
@@ -25,10 +33,6 @@ class Timer : IoDevice(IoReg.TIMA.address, IoReg.TAC.address) { // TODO: cgb dou
         set(value) {
             super.set(IoReg.TAC.address, value)
         }
-
-    companion object {
-        val freqs = arrayOf(1024, 16, 64, 256)
-    }
 
     override fun tick(cycles: Int): Boolean {
         if (tac and 0b100 == 0) return false

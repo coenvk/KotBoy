@@ -2,13 +2,9 @@ package com.arman.kotboy.core.cpu.util
 
 fun Byte.hexString(): String = "$${this.toString(16).toUpperCase()}"
 
-fun Byte.bitString(): String = "$${this.toString(2)}"
+fun Byte.hexString(length: Int): String = "$${this.toString(16).toUpperCase().padStart(length, '0')}"
 
-fun IntRange.hexString(): String {
-    val u = this.first
-    val v = this.last
-    return "${u.hexString()}..${v.hexString()}"
-}
+fun Byte.bitString(): String = "$${this.toString(2)}"
 
 fun Int.hexString(): String = "$${this.toString(16).toUpperCase()}"
 
@@ -16,7 +12,33 @@ fun Int.hexString(length: Int): String = "$${this.toString(16).toUpperCase().pad
 
 fun Int.bitString(): String = "$${this.toString(2)}"
 
+fun Long.hexString(): String = "$${this.toString(16).toUpperCase()}"
+
+fun Long.hexString(length: Int): String = "$${this.toString(16).toUpperCase().padStart(length, '0')}"
+
+fun Long.bitString(): String = "$${this.toString(2)}"
+
+fun ByteArray.contentToHexString(): String {
+    if (this.isEmpty()) return "[]"
+    var out = "["
+    for (i in 0 until this.size - 1) {
+        out += "${this[i].hexString()}, "
+    }
+    out += "${this[this.size - 1].hexString()}]"
+    return out
+}
+
 fun IntArray.contentToHexString(): String {
+    if (this.isEmpty()) return "[]"
+    var out = "["
+    for (i in 0 until this.size - 1) {
+        out += "${this[i].hexString()}, "
+    }
+    out += "${this[this.size - 1].hexString()}]"
+    return out
+}
+
+fun LongArray.contentToHexString(): String {
     if (this.isEmpty()) return "[]"
     var out = "["
     for (i in 0 until this.size - 1) {
@@ -50,7 +72,7 @@ fun Byte.at(bit: Int): Boolean {
 }
 
 fun Byte.set(bit: Int, value: Boolean = true): Byte =
-    if (value) (this or (1 shl bit)).toByte() else (this and (1 shl bit).inv()).toByte()
+        if (value) (this or (1 shl bit)).toByte() else (this and (1 shl bit).inv()).toByte()
 
 fun Byte.toggle(bit: Int): Byte = (this xor (1 shl bit)).toByte()
 

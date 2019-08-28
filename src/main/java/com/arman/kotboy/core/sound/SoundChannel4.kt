@@ -1,33 +1,35 @@
 package com.arman.kotboy.core.sound
 
 import com.arman.kotboy.core.cpu.util.at
-import com.arman.kotboy.core.cpu.util.toInt
 import com.arman.kotboy.core.io.IoReg
 
 class SoundChannel4 : SoundChannel(IoReg.NR_41.address, IoReg.NR_44.address) {
 
-    var nr41: Int
+    override var nr0: Int
+        get() = 0xFF
+        set(value) {}
+    override var nr1: Int
         get() {
             return super.get(IoReg.NR_41.address)
         }
         set(value) {
             super.set(IoReg.NR_41.address, value)
         }
-    var nr42: Int
+    override var nr2: Int
         get() {
             return super.get(IoReg.NR_42.address)
         }
         set(value) {
             super.set(IoReg.NR_42.address, value)
         }
-    var nr43: Int
+    override var nr3: Int
         get() {
             return super.get(IoReg.NR_43.address)
         }
         set(value) {
             super.set(IoReg.NR_43.address, value)
         }
-    var nr44: Int
+    override var nr4: Int
         get() {
             return super.get(IoReg.NR_44.address)
         }
@@ -35,9 +37,13 @@ class SoundChannel4 : SoundChannel(IoReg.NR_41.address, IoReg.NR_44.address) {
             super.set(IoReg.NR_44.address, value)
         }
 
-    override val frequency: Int = 2048 - (this.nr43 or ((this.nr44 and 0x7) shl 8))
-
-    override val period: Int = 0 // TODO
+    override val period: Int
+        get() {
+            val s = (this.nr3 and 0xF0) shr 4
+            val d = this.nr3 and 0x07
+            val div = if (d == 0) 8 else 2 * d * 8
+            return div shl s
+        }
 
     override fun start() {
         // TODO
@@ -53,10 +59,10 @@ class SoundChannel4 : SoundChannel(IoReg.NR_41.address, IoReg.NR_44.address) {
 
     override fun reset() {
         super.reset()
-        this.nr41 = 0xFF
-        this.nr42 = 0x00
-        this.nr43 = 0x00
-        this.nr44 = 0xBF
+        this.nr1 = 0xFF
+        this.nr2 = 0x00
+        this.nr3 = 0x00
+        this.nr4 = 0xBF
     }
 
     override fun set(address: Int, value: Int): Boolean {
@@ -80,43 +86,6 @@ class SoundChannel4 : SoundChannel(IoReg.NR_41.address, IoReg.NR_44.address) {
             IoReg.NR_44.address -> value = value or 0xBF
         }
         return value
-    }
-
-    private fun getSoundLength(): Int {
-        val t1 = this.nr41 and 0x3F
-        return (64 - t1) / 256
-    }
-
-    private fun getInitialVolume(): Int {
-        return (this.nr42 shr 4) and 0xF
-    }
-
-    private fun isEnvelopeIncrease(): Boolean {
-        return this.nr42.toByte().at(3)
-    }
-
-    private fun getEnvelopeSweep(): Int {
-        return this.nr42 and 0x7
-    }
-
-    private fun getClockShift(): Int {
-        return (this.nr43 shr 4) and 0xF
-    }
-
-    private fun getLfsrWidth(): Int {
-        return this.nr43.toByte().at(3).toInt()
-    }
-
-    private fun getDivisorCode(): Int {
-        return this.nr43 and 0x7
-    }
-
-    private fun isRestart(): Boolean {
-        return this.nr44.toByte().at(7)
-    }
-
-    private fun isLengthEnable(): Boolean {
-        return this.nr44.toByte().at(6)
     }
 
 }

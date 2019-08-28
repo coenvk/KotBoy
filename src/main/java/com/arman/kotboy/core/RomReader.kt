@@ -7,6 +7,7 @@ import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
+import javax.activation.UnsupportedDataTypeException
 
 class RomReader(private val file: File) {
 
@@ -49,8 +50,10 @@ class RomReader(private val file: File) {
                 zis.close()
             }
             throw IllegalArgumentException()
-        } else {
+        } else if (isExtension(file.name, "gb", "gbc", "rom")) {
             return read(input, file.length().toInt())
+        } else {
+            throw UnsupportedDataTypeException("The extension of this file is not a supported rom extension: ${file.name}")
         }
     }
 

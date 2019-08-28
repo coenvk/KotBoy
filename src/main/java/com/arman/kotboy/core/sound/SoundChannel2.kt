@@ -1,33 +1,35 @@
 package com.arman.kotboy.core.sound
 
 import com.arman.kotboy.core.cpu.util.at
-import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import com.arman.kotboy.core.io.IoReg
 
 class SoundChannel2 : SoundChannel(IoReg.NR_21.address, IoReg.NR_24.address) {
 
-    var nr21: Int
+    override var nr0: Int
+        get() = 0xFF
+        set(value) {}
+    override var nr1: Int
         get() {
             return super.get(IoReg.NR_21.address)
         }
         set(value) {
             super.set(IoReg.NR_21.address, value)
         }
-    var nr22: Int
+    override var nr2: Int
         get() {
             return super.get(IoReg.NR_22.address)
         }
         set(value) {
             super.set(IoReg.NR_22.address, value)
         }
-    var nr23: Int
+    override var nr3: Int
         get() {
             return super.get(IoReg.NR_23.address)
         }
         set(value) {
             super.set(IoReg.NR_23.address, value)
         }
-    var nr24: Int
+    override var nr4: Int
         get() {
             return super.get(IoReg.NR_24.address)
         }
@@ -35,9 +37,8 @@ class SoundChannel2 : SoundChannel(IoReg.NR_21.address, IoReg.NR_24.address) {
             super.set(IoReg.NR_24.address, value)
         }
 
-    override val frequency: Int = 2048 - (this.nr23 or ((this.nr24 and 0x7) shl 8))
-
-    override val period: Int = (2048 - this.frequency) * 4
+    override val period: Int
+        get() = this.frequency * 4
 
     override fun start() {
         // TODO
@@ -53,10 +54,10 @@ class SoundChannel2 : SoundChannel(IoReg.NR_21.address, IoReg.NR_24.address) {
 
     override fun reset() {
         super.reset()
-        this.nr21 = 0x3F
-        this.nr22 = 0x00
-        this.nr23 = 0x00
-        this.nr24 = 0xBF
+        this.nr1 = 0x3F
+        this.nr2 = 0x00
+        this.nr3 = 0x00
+        this.nr4 = 0xBF
     }
 
     override fun set(address: Int, value: Int): Boolean {
@@ -79,43 +80,6 @@ class SoundChannel2 : SoundChannel(IoReg.NR_21.address, IoReg.NR_24.address) {
             IoReg.NR_24.address -> value = value or 0xBF
         }
         return value
-    }
-
-    private fun getDuty(): Int {
-        return (this.nr21 shr 6) and 0x3
-    }
-
-    private fun getSoundLength(): Int {
-        val t1 = this.nr21 and 0x3F
-        return (64 - t1) / 256
-    }
-
-    private fun getInitialVolume(): Int {
-        return (this.nr22 shr 4) and 0xF
-    }
-
-    private fun isEnvelopeIncrease(): Boolean {
-        return this.nr22.toByte().at(3)
-    }
-
-    private fun getEnvelopeSweep(): Int {
-        return this.nr22 and 0x7
-    }
-
-    private fun getLower8Frequency(): Int {
-        return this.nr23.toUnsignedInt()
-    }
-
-    private fun isRestart(): Boolean {
-        return this.nr24.toByte().at(7)
-    }
-
-    private fun isLengthEnable(): Boolean {
-        return this.nr24.toByte().at(6)
-    }
-
-    private fun getHigher3Frequency(): Int {
-        return this.nr24 and 0x7
     }
 
 }
