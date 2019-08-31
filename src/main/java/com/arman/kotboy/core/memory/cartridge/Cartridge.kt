@@ -158,7 +158,7 @@ class Cartridge(val file: File) : Memory {
     override fun clear() = this.mbc.clear()
 
     fun isCgb(): Boolean {
-        return this.colorMode == ColorMode.CGB
+        return this.colorMode == ColorMode.CGB && !Options.dmg
     }
 
     fun isSgb(): Boolean {
