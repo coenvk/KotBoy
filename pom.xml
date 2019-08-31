@@ -4,7 +4,7 @@
 
     <groupId>com.arman</groupId>
     <artifactId>KotBoy</artifactId>
-    <version>1.0-alpha.1-SNAPSHOT</version>
+    <version>1.0-alpha.1</version>
     <name>KotBoy</name>
     <description>A Game Boy (Color) emulator written in Kotlin.</description>
     <url>https://github.com/campoe/KotBoy</url>
@@ -32,7 +32,7 @@
         <connection>scm:git:https://github.com/campoe/KotBoy.git</connection>
         <developerConnection>scm:git:https://github.com/campoe/KotBoy.git</developerConnection>
         <url>https://github.com/campoe/KotBoy.git</url>
-        <tag>HEAD</tag>
+        <tag>kotboy-v1.0-alpha.1-SNAPSHOT</tag>
     </scm>
 
     <properties>
