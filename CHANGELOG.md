@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [v1.0-alpha.1] - 31-08-2019
+### Changed
+- Reduce jar size by excluding unnecessary dependencies
+
 ## [v1.0-alpha] - 28-08-2019
 ### Added
 - Game Boy CPU emulation
