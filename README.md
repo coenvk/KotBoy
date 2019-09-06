@@ -38,7 +38,7 @@ By default the following key bindings are defined:
 - B - <kbd>A</kbd>
 - A - <kbd>S</kbd>
 - Start - <kbd>Enter</kbd>
-- Select - <kbd>Space</kbd>
+- Select - <kbd>Shift</kbd>
 
 ## Features
 

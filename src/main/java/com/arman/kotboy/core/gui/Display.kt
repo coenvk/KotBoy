@@ -2,8 +2,8 @@ package com.arman.kotboy.core.gui
 
 interface Display : Runnable {
 
-    val border: Border?
-        get() = null
+    val border: Border
+        get() = BmpBorder("gameboy_border.bmp")
 
     fun frameReady(buffer: IntArray)
 

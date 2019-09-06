@@ -1,8 +1,9 @@
 package com.arman.kotboy.core.memory.cartridge
 
-import com.arman.kotboy.core.Options
 import com.arman.kotboy.core.RomReader
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
+import com.arman.kotboy.core.gui.options.EmulatedSystem
+import com.arman.kotboy.core.gui.options.Options
 import com.arman.kotboy.core.memory.*
 import com.arman.kotboy.core.memory.cartridge.mbc.*
 import com.arman.kotboy.core.memory.cartridge.mbc.battery.Battery
@@ -28,7 +29,7 @@ class Cartridge(val file: File) : Memory {
 
     private val mbc: Mbc
 
-    private var bootstrap: Boolean = Options.bootstrap
+    private var bootstrap: Boolean = Options.enableBootstrap
 
     init {
         val values = RomReader(file).read()
@@ -130,17 +131,20 @@ class Cartridge(val file: File) : Memory {
     }
 
     override fun set(address: Int, value: Int): Boolean {
-        if (address == 0xFF50 && value == 0x01) {
+        if (address == 0xFF50 && value != 0x00) {
             bootstrap = false
         }
         return this.mbc.set(address, value)
     }
 
     override fun get(address: Int): Int {
+        val bootstrap = this.bootstrap
         return if (bootstrap && !isCgb() && (address in 0x0 until 0x100)) {
             BootRom.DMG[address]
         } else if (bootstrap && isCgb() && (address in 0x0 until 0x100)) {
             BootRom.CGB[address]
+        } else if (bootstrap && isSgb() && (address in 0x0 until 0x100)) {
+            BootRom.SGB[address]
         } else if (bootstrap && isCgb() && (address in 0x200 until 0x900)) {
             BootRom.CGB[address - 0x100]
         } else {
@@ -154,15 +158,20 @@ class Cartridge(val file: File) : Memory {
 
     override fun fill(value: Int) = this.mbc.fill(value)
     override fun range(): IntRange = this.mbc.range()
-    override fun reset() = this.mbc.reset()
+
+    override fun reset() {
+        this.mbc.reset()
+        this.bootstrap = Options.enableBootstrap
+    }
+
     override fun clear() = this.mbc.clear()
 
     fun isCgb(): Boolean {
-        return this.colorMode == ColorMode.CGB && !Options.dmg
+        return this.colorMode == ColorMode.CGB && Options.emulatedSystem == EmulatedSystem.CGB
     }
 
     fun isSgb(): Boolean {
-        return this.sgbIndicator
+        return this.sgbIndicator && Options.emulatedSystem == EmulatedSystem.SGB
     }
 
     override fun toString(): String = this.mbc.toString()

@@ -1,6 +1,7 @@
 package com.arman.kotboy.consoles.gb.gpu
 
 import com.arman.kotboy.core.gpu.Palette
+import com.arman.kotboy.core.gui.options.Options
 import com.arman.kotboy.core.io.IoReg
 
 
@@ -11,9 +12,10 @@ class DmgPalette : Palette(IoReg.BGP.address, IoReg.OBP1.address) {
     private val obp1Palette: IntArray
 
     init {
-        bgpPalette = DmgScheme.GREY.colors
-        obp0Palette = DmgScheme.GREY.colors
-        obp1Palette = DmgScheme.GREY.colors
+        val palette = intArrayOf(Options.palette0, Options.palette1, Options.palette2, Options.palette3)
+        bgpPalette = palette
+        obp0Palette = palette
+        obp1Palette = palette
     }
 
     var bgp: Int

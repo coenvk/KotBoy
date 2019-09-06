@@ -24,6 +24,7 @@
                 <exclude>**/roms/**</exclude>
                 <exclude>**/*.gb</exclude>
                 <exclude>**/*.zip</exclude>
+                <exclude>**/*.7z</exclude>
                 <exclude>**/*.rom</exclude>
                 <exclude>**/*.gbc</exclude>
                 <exclude>**/*.sav</exclude>

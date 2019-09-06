@@ -4,6 +4,7 @@ import com.arman.kotboy.core.cpu.Cpu
 import com.arman.kotboy.core.cpu.Reg8
 import com.arman.kotboy.core.gpu.Gpu
 import com.arman.kotboy.core.gui.Display
+import com.arman.kotboy.core.gui.options.Options
 import com.arman.kotboy.core.io.Io
 import com.arman.kotboy.core.io.input.ButtonListener
 import com.arman.kotboy.core.io.input.InputHandler
@@ -95,13 +96,15 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
         this.io.reset()
         this.gpu.reset()
 
+        this.cart.reset()
+
         if (cart.isCgb()) {
             this.cpu.write(Reg8.A, 0x11)
         }
     }
 
     override fun run() {
-        if (!Options.bootstrap) {
+        if (!Options.enableBootstrap) {
             this.reset()
         }
 
@@ -135,7 +138,6 @@ class GameBoy(private val file: File, val display: Display, val inputHandler: In
                     Thread.sleep(sleepTime)
                 }
             }
-
         }
     }
 

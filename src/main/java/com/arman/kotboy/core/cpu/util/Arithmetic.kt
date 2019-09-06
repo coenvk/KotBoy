@@ -146,3 +146,7 @@ fun Int.signed(): Int {
     return if ((this and (1 shl 7)) == 0) this
     else this - 0x100
 }
+
+inline fun <reified T> Int.toEnum(): T where T : Enum<T> {
+    return enumValues<T>()[this]
+}

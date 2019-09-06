@@ -1,6 +1,6 @@
 package com.arman.kotboy.core.gui
 
-import com.arman.kotboy.core.Options
+import com.arman.kotboy.core.gui.options.Options
 import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -16,11 +16,10 @@ import kotlin.math.round
 class JDisplay : Display, JPanel() {
 
     private val img: BufferedImage
-    override val border: Border? = BmpBorder("gameboy_border.bmp")
 
     private var offsetX: Int
     private var offsetY: Int
-    private var scale: Float
+    private var scale: Float = Options.scale.toFloat()
 
     private var lock: ReentrantLock = ReentrantLock()
     private val repaintCondition: Condition = lock.newCondition()
@@ -35,11 +34,10 @@ class JDisplay : Display, JPanel() {
             }
         })
 
-        this.scale = Options.scale.toFloat()
         this.offsetX = 0
         this.offsetY = 0
 
-        val size = Dimension(Display.WIDTH * Options.scale, Display.HEIGHT * Options.scale)
+        val size = Dimension(Options.scale * Display.WIDTH, Options.scale * Display.HEIGHT)
 
         this.size = size
         this.preferredSize = size
@@ -49,10 +47,10 @@ class JDisplay : Display, JPanel() {
         g.clearRect(0, 0, this.img.width, this.img.height)
     }
 
-    fun toggleFullscreen(frame: JFrame, windowed: Boolean) {
+    fun toggleFullscreen(frame: JFrame) {
         frame.dispose()
 
-        frame.isUndecorated = !windowed
+        frame.isUndecorated = true
         frame.contentPane = this
         frame.extendedState = Frame.MAXIMIZED_BOTH
         frame.bounds = frame.graphicsConfiguration.bounds
@@ -64,7 +62,7 @@ class JDisplay : Display, JPanel() {
     private fun onResize(comp: Component) {
         val width = comp.width
         val height = comp.height
-        scale = if (border == null) {
+        scale = if (!Options.enableBorder) {
             min(width.toFloat() / Display.WIDTH, height.toFloat() / Display.HEIGHT)
         } else {
             min(width.toFloat() / (Display.WIDTH + Border.PX * 2), height.toFloat() / (Display.HEIGHT + Border.PY * 2))
@@ -90,10 +88,10 @@ class JDisplay : Display, JPanel() {
 
         val g2d = g.create() as Graphics2D
 
-        this.border?.let {
+        if (Options.enableBorder) {
             val borderOffsetX = round(offsetX - Border.PX * scale)
             val borderOffsetY = round(offsetY - Border.PY * scale)
-            it.draw(g2d, borderOffsetX.toInt(), borderOffsetY.toInt(), scale)
+            this.border.draw(g2d, borderOffsetX.toInt(), borderOffsetY.toInt(), scale)
         }
 
         g2d.drawImage(img, offsetX, offsetY, (Display.WIDTH * scale).toInt(), (Display.HEIGHT * scale).toInt(), null)

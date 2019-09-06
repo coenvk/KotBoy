@@ -4,7 +4,7 @@
 
     <groupId>com.arman</groupId>
     <artifactId>KotBoy</artifactId>
-    <version>1.0-alpha.2-SNAPSHOT</version>
+    <version>1.0</version>
     <name>KotBoy</name>
     <description>A Game Boy (Color) emulator written in Kotlin.</description>
     <url>https://github.com/campoe/KotBoy</url>

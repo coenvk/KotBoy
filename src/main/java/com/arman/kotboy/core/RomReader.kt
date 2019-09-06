@@ -39,7 +39,7 @@ class RomReader(private val file: File) {
                     entry = zis.nextEntry
                     if (entry == null) break
                     val name = entry.name
-                    if (isExtension(name, "gb", "gbc", "rom")) {
+                    if (isExtension(name, "gb", "gbc", "rom", "bin")) {
                         return read(zis, entry.size.toInt())
                     }
                     zis.closeEntry()
@@ -50,7 +50,7 @@ class RomReader(private val file: File) {
                 zis.close()
             }
             throw IllegalArgumentException()
-        } else if (isExtension(file.name, "gb", "gbc", "rom")) {
+        } else if (isExtension(file.name, "gb", "gbc", "rom", "bin")) {
             return read(input, file.length().toInt())
         } else {
             throw UnsupportedDataTypeException("The extension of this file is not a supported rom extension: ${file.name}")
