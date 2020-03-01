@@ -19,21 +19,19 @@ class Disassembler {
 
             var opcode = this.cart[PC++]
 
-            val instr: Instr
             if (opcode == OpCode.PREFIX_CB.opcode) {
                 opcode = this.cart[PC++]
-                instr = Instr(OpCode[opcode, true])
-            } else {
-                instr = Instr(OpCode[opcode])
             }
 
-            if (instr.argsSize() < 0) continue
+            val op = OpCode[opcode]
 
-            val args = IntArray(instr.argsSize())
+            if (op.argsSize() < 0) continue
+
+            val args = IntArray(op.argsSize())
             for (i in 0 until args.size) {
                 args[i] = this.cart[PC++]
             }
-            out += "$line - $instr\t"
+            out += "$line - $op\t"
             for (arg in args) out += "${arg.hexString()} "
             out += "\n"
         }

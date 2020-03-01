@@ -1,6 +1,7 @@
 package com.arman.kotboy
 
 import com.arman.kotboy.core.GameBoy
+import com.arman.kotboy.core.cpu.InstrSet
 import com.arman.kotboy.core.gui.Display
 import com.arman.kotboy.core.gui.JDisplay
 import com.arman.kotboy.core.gui.options.ColorPaletteDialog
@@ -43,7 +44,10 @@ class KotBoy {
         }
     }
 
-    fun run() = setupGui()
+    fun run() {
+        setupGui()
+        InstrSet // initialize instructions
+    }
 
     private fun setupGui() {
         SwingUtilities.invokeLater {

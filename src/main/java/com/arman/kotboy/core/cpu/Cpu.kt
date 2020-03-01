@@ -124,13 +124,11 @@ class Cpu(private val gb: GameBoy) {
 
         var opcode = this.mmu[PC++]
 
-        val op: OpCode
         if (opcode == OpCode.PREFIX_CB.opcode) {
-            opcode = this.mmu[PC++]
-            op = OpCode[opcode, true]
-        } else {
-            op = OpCode[opcode]
+            opcode = this.mmu[PC++] + 0x100
         }
+
+        val op = OpCode[opcode]
 
         if (op.argsSize() < 0) return 0
 
@@ -138,11 +136,9 @@ class Cpu(private val gb: GameBoy) {
         for (i in 0 until args.size) {
             args[i] = this.mmu[PC++]
         }
-        val instr = Instr(op, *args)
+        Log.d("$line - $op - ${args.contentToHexString()}")
 
-        Log.d("$line - $instr")
-
-        val cycles = instr.execute(this)
+        val cycles = InstrSet.execute(this, opcode, args)
 
         if (op != OpCode.EI_FB && eiExecuted) {
             this.ime = true
