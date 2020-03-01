@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [v1.1] - 01-03-2020
+### Changed
+- Improve performance of instruction look up
+
 ## [v1.0] - 06-09-2019
 ### Added
 - Adjust options within GUI
