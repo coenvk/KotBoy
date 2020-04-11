@@ -8,6 +8,8 @@ A Game Boy (Color) emulator written in Kotlin.
 [![GitHub last commit](https://img.shields.io/github/last-commit/coenvk/KotBoy)](https://github.com/coenvk/KotBoy/commits/master)
 [![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/coenvk/KotBoy?include_prereleases)](https://github.com/coenvk/KotBoy/releases)
 
+<img src="https://github.com/coenvk/KotBoy/blob/master/art/pokemon-gold.png" width="400">
+
 ## Installation
 
 All currently available releases can be found [here](https://github.com/coenvk/KotBoy/releases).
