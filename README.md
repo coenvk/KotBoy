@@ -2,7 +2,7 @@
 
 A Game Boy (Color) emulator written in Kotlin.
 
-[![Build Status](https://travis-ci.org/coenvk/KotBoy.svg?branch=master)](https://travis-ci.org/campoe/KotBoy)
+[![Build Status](https://travis-ci.org/coenvk/KotBoy.svg?branch=master)](https://travis-ci.org/coenvk/KotBoy)
 [![GitHub](https://img.shields.io/github/license/coenvk/KotBoy)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/coenvk/KotBoy/graphs/commit-activity)
 [![GitHub last commit](https://img.shields.io/github/last-commit/coenvk/KotBoy)](https://github.com/coenvk/KotBoy/commits/master)
