@@ -3,11 +3,11 @@ package com.arman.kotboy.core
 import com.arman.kotboy.core.cpu.util.toUnsignedInt
 import java.io.File
 import java.io.FileInputStream
+import java.io.IOException
 import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
-import javax.activation.UnsupportedDataTypeException
 
 class RomReader(private val file: File) {
 
@@ -53,7 +53,7 @@ class RomReader(private val file: File) {
         } else if (isExtension(file.name, "gb", "gbc", "rom", "bin")) {
             return read(input, file.length().toInt())
         } else {
-            throw UnsupportedDataTypeException("The extension of this file is not a supported rom extension: ${file.name}")
+            throw IOException("The extension of this file is not a supported rom extension: ${file.name}")
         }
     }
 
