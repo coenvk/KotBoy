@@ -81,7 +81,8 @@ abstract class Mbc(protected val rom: Rom, protected val ram: Ram? = null, priva
     }
 
     override fun reset() {
-        this.ram?.reset()
+        // Cartridge RAM keeps its contents across a console reset; clearing it here wiped the
+        // battery save that was loaded when the cartridge was created.
         this.romBank = 1
         this.ramBank = 0
     }
